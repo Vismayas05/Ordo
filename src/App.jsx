@@ -1,5 +1,5 @@
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import {
   LayoutDashboard,
   CalendarDays,
@@ -112,6 +112,114 @@ function formatDate(date) {
     month: "long",
     day: "numeric",
   }).format(date);
+}
+ 
+function SmartAlerts({ tasks }) {
+  const [voiceEnabled, setVoiceEnabled] = useState(
+    () => localStorage.getItem("ordo-voice-alerts") === "true"
+  );
+  const [alert, setAlert] = useState(null);
+  const spoken = useRef(new Set());
+
+  useEffect(() => {
+    const checkSchedule = () => {
+      const now = new Date();
+      const today = now.toDateString();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+      const pending = tasks
+        .filter((task) => !task.done && task.time)
+        .map((task) => {
+          const [hours, minutes] = task.time.split(":").map(Number);
+          const start = hours * 60 + minutes;
+          return {
+            ...task,
+            start,
+            end: start + Number(task.duration || 30),
+          };
+        })
+        .sort((a, b) => a.start - b.start);
+
+      let message = null;
+      let alertKey = null;
+
+      for (const task of pending) {
+        const remaining = task.end - currentMinutes;
+
+        if (remaining > 0 && remaining <= 5) {
+          alertKey = `${today}-${task.id}-ending`;
+          message = `"${task.title}" is ending in ${remaining} minute${remaining === 1 ? "" : "s"}.`;
+          break;
+        }
+
+        if (currentMinutes >= task.end) {
+          const next = pending.find(
+            (item) => item.id !== task.id && item.start >= task.end
+          );
+
+          if (next && currentMinutes < next.start) {
+            alertKey = `${today}-${task.id}-overrun`;
+            message = `"${task.title}" is running late. Your next task, "${next.title}", starts at ${next.time}.`;
+            break;
+          }
+        }
+      }
+
+      if (!message || spoken.current.has(alertKey)) return;
+
+      spoken.current.add(alertKey);
+      setAlert(message);
+
+      if (
+        voiceEnabled &&
+        "speechSynthesis" in window
+      ) {
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(
+          new SpeechSynthesisUtterance(message)
+        );
+      }
+    };
+
+    checkSchedule();
+    const timer = window.setInterval(checkSchedule, 15000);
+
+    return () => window.clearInterval(timer);
+  }, [tasks, voiceEnabled]);
+
+  function toggleVoice() {
+    const next = !voiceEnabled;
+    setVoiceEnabled(next);
+    localStorage.setItem("ordo-voice-alerts", String(next));
+
+    if (next && "speechSynthesis" in window) {
+      window.speechSynthesis.speak(
+        new SpeechSynthesisUtterance("Ordo voice alerts enabled.")
+      );
+    }
+  }
+
+  return (
+    <section className="ordo-smart-alert" aria-live="polite">
+      <div className="ordo-alert-copy">
+        <strong>
+          {alert ? "Schedule alert" : "Smart alerts"}
+        </strong>
+        <p>
+          {alert ||
+            "Get a warning before a task ends or when your schedule runs late."}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        className="secondary-button"
+        onClick={toggleVoice}
+      >
+        {voiceEnabled ? "Voice: On" : "Enable voice"}
+      </button>
+    </section>
+  );
 }
 
 function App() {
@@ -585,7 +693,7 @@ function App() {
               )}
             </section>
           )}
-
+           <SmartAlerts tasks={tasks} />
           <section className="content-grid">
             <article className="panel schedule-panel">
               <div className="panel-heading">
