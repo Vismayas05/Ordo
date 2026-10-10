@@ -77,8 +77,8 @@ select:focus-visible {
 
 .brand-logo {
   display: block;
-  width: 190px;
-  height: 78px;
+  width: 350px;
+  height: 200px;
   max-width: 100%;
   object-fit: contain;
   object-position: left center;
@@ -1240,5 +1240,239 @@ h1 {
 
   .page-footer {
     font-size: 8px;
+  }
+}
+
+/* Ordo smart scheduling */
+
+.schedule-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 17px 19px;
+  margin-bottom: 20px;
+  background: #fff8f4;
+  border: 1px solid #f2ded5;
+  border-radius: 12px;
+}
+
+.schedule-alert-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  color: #bd715c;
+  background: #fbe9e1;
+  border-radius: 9px;
+}
+
+.schedule-alert-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.schedule-alert-copy strong {
+  display: block;
+  color: #66483e;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.schedule-alert-copy p {
+  margin: 5px 0;
+  color: #816c63;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.schedule-alert-copy > span {
+  color: #a18478;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.schedule-alert-button {
+  flex-shrink: 0;
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 10px;
+}
+
+.live-countdown {
+  display: grid;
+  gap: 7px;
+  padding: 17px;
+  margin-top: 20px;
+  background: #f6f7f9;
+  border: 1px solid #eceef2;
+  border-radius: 10px;
+}
+
+.countdown-label {
+  color: #818795;
+  font-size: 10px;
+}
+
+.live-countdown strong {
+  color: #273651;
+  font-size: 30px;
+  line-height: 1.2;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.live-countdown > span {
+  color: #9195a0;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.focus-start-button {
+  width: 100%;
+  margin-top: 14px;
+}
+
+.task-status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.status-running {
+  color: #526c91;
+  background: #edf1f8;
+}
+
+.status-overdue {
+  color: #bd6958;
+  background: #fbefeb;
+}
+
+.task-action {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  color: #8a909b;
+  border-color: transparent;
+  opacity: 0.7;
+}
+
+.task-action:hover {
+  color: #354765;
+  background: #edf0f5;
+  opacity: 1;
+}
+
+.focus-timer-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 18px 10px;
+  margin: 16px 0 8px;
+  border: 1px solid #e4e8ef;
+  border-radius: 10px;
+  background: #fff;
+  color: #687895;
+}
+
+.focus-timer-display strong {
+  color: #263651;
+  font-size: 29px;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.focus-session-status {
+  text-align: center;
+  color: #898e99;
+  font-size: 10px;
+  margin-bottom: 14px;
+}
+
+.focus-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.focus-controls button {
+  flex: 1;
+  min-width: 0;
+  padding: 0 9px;
+  font-size: 10px;
+}
+
+.insights-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 5px 0 20px;
+}
+
+.insights-summary > div {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  background: #f8f8f6;
+  border: 1px solid #efefec;
+  border-radius: 8px;
+}
+
+.insights-summary span {
+  color: #898d96;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.insights-summary strong {
+  color: #303b50;
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+@media (max-width: 800px) {
+  .schedule-alert {
+    flex-wrap: wrap;
+    padding: 14px;
+  }
+
+  .schedule-alert-copy {
+    flex-basis: calc(100% - 50px);
+  }
+
+  .schedule-alert-button {
+    margin-left: 50px;
+  }
+}
+
+@media (max-width: 520px) {
+  .live-countdown {
+    padding: 14px;
+  }
+
+  .live-countdown strong {
+    font-size: 27px;
+  }
+
+  .focus-timer-display strong {
+    font-size: 26px;
+  }
+
+  .insights-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-alert-button {
+    margin-left: 0;
+    width: 100%;
   }
 }
