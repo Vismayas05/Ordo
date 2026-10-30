@@ -608,49 +608,6 @@ export default function App() {
     }
   }
 
-  function loadSampleTemplate() {
-    const nowH = new Date().getHours();
-    const pad = (n) => String(n).padStart(2, "0");
-    const t1 = `${pad(Math.max(0, nowH - 1))}:00`;
-    const t2 = `${pad(nowH)}:00`;
-    const t3 = `${pad((nowH + 1) % 24)}:15`;
-
-    const sample = [
-      {
-        id: `sample-1-${Date.now()}`,
-        title: "Focus Block: Deep Work",
-        time: t1,
-        duration: 45,
-        priority: "High",
-        category: "Work",
-        done: false,
-        createdAt: Date.now() - 3600000,
-      },
-      {
-        id: `sample-2-${Date.now()}`,
-        title: "Project Review",
-        time: t2,
-        duration: 30,
-        priority: "Medium",
-        category: "Project",
-        done: false,
-        createdAt: Date.now() - 1800000,
-      },
-      {
-        id: `sample-3-${Date.now()}`,
-        title: "Wrap-up & Planning",
-        time: t3,
-        duration: 30,
-        priority: "Low",
-        category: "Personal",
-        done: false,
-        createdAt: Date.now(),
-      },
-    ];
-    setTasks(sample);
-    setToast(language === "ml" ? "സാമ്പിൾ ടാസ്കുകൾ ചേർത്തു." : "Sample routine loaded.");
-  }
-
   function saveTask(event) {
     event.preventDefault();
     const cleanTitle = title.trim();
@@ -1157,12 +1114,9 @@ export default function App() {
                   >
                     Add tasks to organize your day. If a task takes longer than planned, Ordo rings an alert.
                   </p>
-                  <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                  <div>
                     <button className="primary-button" onClick={openNewTask}>
                       <Plus size={16} /> Add Task
-                    </button>
-                    <button className="secondary-button" onClick={loadSampleTemplate}>
-                      <Sparkles size={15} /> Load Sample
                     </button>
                   </div>
                 </div>
