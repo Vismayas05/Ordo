@@ -1,161 +1,317 @@
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  LayoutDashboard, CalendarDays, CheckSquare, BarChart3, Settings,
-  Plus, Search, Clock3, ArrowUpRight, CircleCheck, Circle, Menu, X,
-  Trash2, Pencil, AlertTriangle, Check, Volume2, VolumeX, Languages,
-  Bell, CalendarClock,
+  LayoutDashboard,
+  CalendarDays,
+  BarChart3,
+  Settings,
+  Plus,
+  Search,
+  Clock3,
+  CircleCheck,
+  Circle,
+  Menu,
+  X,
+  Trash2,
+  Pencil,
+  AlertTriangle,
+  Check,
+  Volume2,
+  VolumeX,
+  Languages,
+  CalendarClock,
+  FastForward,
+  Sliders,
+  ShieldAlert,
+  Sparkles,
+  Zap,
 } from "lucide-react";
+
 import Insights from "./pages/Insights.jsx";
+import BackgroundCanvas from "./components/BackgroundCanvas.jsx";
+import StressCascadeBanner from "./components/StressCascadeBanner.jsx";
+import OrdoProfileModal from "./components/OrdoProfileModal.jsx";
+import OrdoLogo from "./components/OrdoLogo.jsx";
+
+import {
+  calculateScheduleCascade,
+  applyDominoShift,
+} from "./services/stressEngine.js";
+import {
+  getStoredProfile,
+} from "./services/personaConfig.js";
+import {
+  startStressAlarmLoop,
+  stopStressAlarm,
+} from "./services/alarmSound.js";
+
 const STORAGE_KEY = "ordo-tasks";
 const SETTINGS_KEY = "ordo-settings";
 
+// 3 clean, essential navigation tabs
 const NAV = [
   { label: "Overview", icon: LayoutDashboard },
-  { label: "My schedule", icon: CalendarDays },
-  { label: "My tasks", icon: CheckSquare },
+  { label: "My Schedule", icon: CalendarDays },
   { label: "Insights", icon: BarChart3 },
 ];
 
 const DURATIONS = [15, 30, 45, 60, 90, 120];
 
+// Simple, direct text without long conjunctions or wordy fluff
 const TEXT = {
   en: {
-    Overview: "Overview", "My schedule": "My schedule",
-    "My tasks": "My tasks", Insights: "Insights", Settings: "Settings",
-    workspace: "WORKSPACE", search: "Search tasks...", newTask: "New task",
-    welcome: "Good things take focus.", subtitle: "A little structure goes a long way. Let's make today count.",
-    tasks: "Tasks", total: "total", remaining: "remaining", completed: "Completed",
-    marked: "Tasks marked complete", timeRemaining: "Time remaining",
-    planned: "Planned time for unfinished tasks", completion: "Completion",
-    progress: "Your current task progress", yourPlan: "YOUR PLAN",
-    yourProgress: "YOUR PROGRESS", yourSchedule: "Your schedule",
-    allTasks: "All tasks", upcoming: "Upcoming schedule",
-    summary: "Progress summary", organised: "Your tasks, organised by start time.",
-    unfinished: "Unfinished tasks in start-time order.",
-    taskCompletion: "Task completion", viewAll: "View all",
-    plannedTime: "Planned task time", highPriority: "High-priority tasks",
-    remainingTasks: "Remaining tasks", noMatches: "No matching tasks",
-    nothingUpcoming: "Nothing upcoming", startHere: "Your day starts here",
+    Overview: "Overview",
+    "My Schedule": "My Schedule",
+    Insights: "Insights",
+    Settings: "Settings",
+    workspace: "WORKSPACE",
+    search: "Search tasks...",
+    newTask: "New Task",
+    welcome: "Today's Schedule",
+    subtitle: "Tasks and time tracking with alert cues.",
+    tasks: "Tasks",
+    total: "total",
+    remaining: "remaining",
+    completed: "Completed",
+    marked: "Done",
+    timeRemaining: "Time Left",
+    planned: "Planned",
+    completion: "Progress",
+    progress: "Completion rate",
+    yourPlan: "SCHEDULE",
+    yourProgress: "ANALYTICS",
+    yourSchedule: "Today's Tasks",
+    allTasks: "Schedule",
+    upcoming: "Upcoming",
+    summary: "Summary",
+    organised: "Organized by start time.",
+    unfinished: "Pending tasks.",
+    taskCompletion: "Completion",
+    viewAll: "View All",
+    plannedTime: "Planned time",
+    highPriority: "High priority",
+    remainingTasks: "Remaining",
+    noMatches: "No matching tasks",
+    nothingUpcoming: "Nothing upcoming",
+    startHere: "No tasks yet",
     searchTip: "Try a different search term.",
-    firstTask: "Add your first task to start planning your day.",
-    createFirst: "Create your first task", addAnother: "Add another task",
-    current: "CURRENT TASK", inProgress: "IN PROGRESS", upNext: "UP NEXT",
-    timeOver: "Time over plan", timeLeft: "Time remaining",
-    untilEnd: "Until this task's planned end", reviewNext: "Review next task",
-    scheduleAlert: "Your schedule may need a small adjustment",
-    noAuto: "Ordo won't move any task automatically. You decide what to change.",
-    nextComing: "Your next task is coming up. Get ready before it starts.",
-    caughtUp: "All caught up!", nothingScheduled: "Nothing scheduled yet",
-    noRemaining: "No unfinished tasks remain.",
-    addToSee: "Add a task to see what's coming up next.", createTask: "Create a task",
-    progressOver: "Progress over perfection",
-    completedOf: "tasks completed. Every step counts.",
-    footer: "Built for a more intentional day.",
-    refine: "REFINE YOUR PLAN", makeHappen: "MAKE IT HAPPEN",
-    editTask: "Edit task", createTitle: "Create a task",
-    updateDetails: "Update the details for this task.",
-    nextStep: "Give your next step a place in your day.",
-    taskName: "Task name", taskPlaceholder: "What do you want to work on?",
-    startTime: "Start time", duration: "Duration", priority: "Priority",
-    category: "Category", cancel: "Cancel", saveChanges: "Save changes",
-    create: "Create task", Personal: "Personal", Study: "Study",
-    Work: "Work", Health: "Health", Project: "Project", Other: "Other",
-    Low: "Low", Medium: "Medium", High: "High",
-    markComplete: "Mark complete", markIncomplete: "Mark incomplete",
-    delete: "Delete task", edit: "Edit task", language: "Language",
-    voiceLabel: "Spoken reminders", notificationLabel: "Browser notifications",
-    settingsTitle: "Your preferences",
-    settingsDescription: "Choose your language and reminder preferences.",
-    voiceOn: "Voice reminders on", voiceOff: "Voice reminders off",
+    firstTask: "Add your first task to start planning.",
+    createFirst: "Add Task",
+    addAnother: "Add Task",
+    current: "CURRENT TASK",
+    inProgress: "IN PROGRESS",
+    upNext: "UP NEXT",
+    timeOver: "Overdue",
+    timeLeft: "Time Remaining",
+    untilEnd: "Until end",
+    reviewNext: "Next task",
+    scheduleAlert: "Schedule alert",
+    noAuto: "Decide when to shift tasks.",
+    nextComing: "Next task starts soon.",
+    caughtUp: "All tasks done",
+    nothingScheduled: "No tasks scheduled",
+    noRemaining: "No unfinished tasks.",
+    addToSee: "Add a task to start.",
+    createTask: "Create Task",
+    progressOver: "Progress",
+    completedOf: "completed.",
+    footer: "ORDO // ALERT SCHEDULER",
+    refine: "EDIT TASK",
+    makeHappen: "NEW TASK",
+    editTask: "Edit Task",
+    createTitle: "Create Task",
+    updateDetails: "Update task details.",
+    nextStep: "Add task to schedule.",
+    taskName: "Task Name",
+    taskPlaceholder: "What needs to be done?",
+    startTime: "Start Time",
+    duration: "Duration",
+    priority: "Priority",
+    category: "Category",
+    cancel: "Cancel",
+    saveChanges: "Save",
+    create: "Add Task",
+    Personal: "Personal",
+    Study: "Study",
+    Work: "Work",
+    Health: "Health",
+    Project: "Project",
+    Other: "Other",
+    Low: "Low",
+    Medium: "Medium",
+    High: "High",
+    markComplete: "Mark complete",
+    markIncomplete: "Mark incomplete",
+    delete: "Delete task",
+    edit: "Edit task",
+    language: "Language",
+    voiceLabel: "Voice alerts",
+    notificationLabel: "Browser notifications",
+    settingsTitle: "Preferences",
+    settingsDescription: "Sound, notification, and language preferences.",
+    voiceOn: "Sound on",
+    voiceOff: "Sound muted",
     enableNotifications: "Enable notifications",
-    notificationReady: "Browser notifications enabled.",
-    permissionDenied: "Notifications are blocked in browser settings.",
-    unavailable: "Browser notifications are unavailable.",
-    startReminder: "It's time for", endReminder: "The planned time has ended for",
-    taskStarting: "Your task is starting now.",
-    endAlert: "Your task has reached its planned end time.",
-    conflictTitle: "Schedule overlap detected",
-    conflictDescription: "Choose a suggested time if you want to adjust your schedule.",
-    moveAfter: "Move to", keepSchedule: "Keep schedule",
-    moved: "Task rescheduled.", noConflicts: "No schedule overlaps detected.",
-    alerts: "Schedule checks", languageHint: "Choose your preferred interface language.",
-    english: "English", malayalam: "മലയാളം", priorityLabel: "Priority",
+    notificationReady: "Notifications enabled.",
+    permissionDenied: "Notifications blocked.",
+    unavailable: "Notifications unavailable.",
+    startReminder: "Time for",
+    endReminder: "Time ended for",
+    taskStarting: "Starting now.",
+    endAlert: "Time ended.",
+    conflictTitle: "Overlap detected",
+    conflictDescription: "Adjust times to avoid overlap.",
+    moveAfter: "Move to",
+    keepSchedule: "Keep",
+    moved: "Rescheduled.",
+    noConflicts: "No overlaps.",
+    alerts: "Overlaps",
+    languageHint: "Choose interface language.",
+    english: "English",
+    malayalam: "മലയാളം",
+    priorityLabel: "Priority",
   },
   ml: {
-    Overview: "അവലോകനം", "My schedule": "എന്റെ ഷെഡ്യൂൾ",
-    "My tasks": "എന്റെ ടാസ്കുകൾ", Insights: "വിശകലനം", Settings: "ക്രമീകരണങ്ങൾ",
-    workspace: "പ്രവർത്തന മേഖല", search: "ടാസ്കുകൾ തിരയുക...", newTask: "പുതിയ ടാസ്ക്",
-    welcome: "ശ്രദ്ധയോടെ മുന്നേറാം.", subtitle: "ചെറിയൊരു ക്രമീകരണം ദിവസത്തെ മികച്ചതാക്കും.",
-    tasks: "ടാസ്കുകൾ", total: "ആകെ", remaining: "ബാക്കി", completed: "പൂർത്തിയാക്കി",
-    marked: "പൂർത്തിയാക്കിയ ടാസ്കുകൾ", timeRemaining: "ബാക്കിയുള്ള സമയം",
-    planned: "പൂർത്തിയാകാത്ത ടാസ്കുകളുടെ ആസൂത്രിത സമയം", completion: "പൂർത്തീകരണം",
-    progress: "നിലവിലെ ടാസ്ക് പുരോഗതി", yourPlan: "നിങ്ങളുടെ പ്ലാൻ",
-    yourProgress: "നിങ്ങളുടെ പുരോഗതി", yourSchedule: "നിങ്ങളുടെ ഷെഡ്യൂൾ",
-    allTasks: "എല്ലാ ടാസ്കുകളും", upcoming: "വരാനിരിക്കുന്ന ഷെഡ്യൂൾ",
-    summary: "പുരോഗതി സംഗ്രഹം", organised: "സമയക്രമത്തിലുള്ള ടാസ്കുകൾ.",
-    unfinished: "പൂർത്തിയാകാത്ത ടാസ്കുകൾ സമയക്രമത്തിൽ.",
-    taskCompletion: "ടാസ്ക് പൂർത്തീകരണം", viewAll: "എല്ലാം കാണുക",
-    plannedTime: "ആസൂത്രിത സമയം", highPriority: "ഉയർന്ന മുൻഗണനയുള്ളവ",
-    remainingTasks: "ബാക്കിയുള്ള ടാസ്കുകൾ", noMatches: "ടാസ്കുകൾ കണ്ടെത്തിയില്ല",
-    nothingUpcoming: "വരാനിരിക്കുന്ന ടാസ്കുകളില്ല", startHere: "ഇവിടെ തുടങ്ങാം",
-    searchTip: "മറ്റൊരു വാക്ക് ഉപയോഗിച്ച് തിരയൂ.",
-    firstTask: "നിങ്ങളുടെ ആദ്യ ടാസ്ക് ചേർത്ത് ദിവസം പ്ലാൻ ചെയ്യൂ.",
-    createFirst: "ആദ്യ ടാസ്ക് സൃഷ്ടിക്കുക", addAnother: "മറ്റൊരു ടാസ്ക് ചേർക്കുക",
-    current: "നിലവിലെ ടാസ്ക്", inProgress: "പുരോഗമിക്കുന്നു", upNext: "അടുത്തത്",
-    timeOver: "സമയം കഴിഞ്ഞു", timeLeft: "ബാക്കിയുള്ള സമയം",
-    untilEnd: "ടാസ്ക് അവസാനിക്കാൻ", reviewNext: "അടുത്ത ടാസ്ക് പരിശോധിക്കുക",
-    scheduleAlert: "ഷെഡ്യൂളിൽ ചെറിയ മാറ്റം ആവശ്യമായേക്കാം",
-    noAuto: "Ordo സ്വയം ടാസ്കുകൾ മാറ്റില്ല. നിങ്ങൾക്ക് മാറ്റം തീരുമാനിക്കാം.",
-    nextComing: "അടുത്ത ടാസ്ക് ഉടൻ തുടങ്ങും. തയ്യാറാകൂ.",
-    caughtUp: "എല്ലാം പൂർത്തിയായി!", nothingScheduled: "ടാസ്കുകളൊന്നും ഷെഡ്യൂൾ ചെയ്തിട്ടില്ല",
-    noRemaining: "പൂർത്തിയാക്കാനുള്ള ടാസ്കുകളില്ല.",
-    addToSee: "അടുത്ത ടാസ്ക് കാണാൻ ഒന്ന് ചേർക്കൂ.", createTask: "ടാസ്ക് സൃഷ്ടിക്കുക",
-    progressOver: "പൂർണ്ണതയേക്കാൾ പുരോഗതി",
-    completedOf: "ടാസ്കുകൾ പൂർത്തിയാക്കി. ഓരോ ചുവടും പ്രധാനമാണ്.",
-    footer: "കൂടുതൽ ക്രമബദ്ധമായ ദിവസത്തിനായി.",
-    refine: "പ്ലാൻ പുതുക്കുക", makeHappen: "തുടങ്ങാം",
-    editTask: "ടാസ്ക് തിരുത്തുക", createTitle: "ടാസ്ക് സൃഷ്ടിക്കുക",
-    updateDetails: "ടാസ്കിന്റെ വിവരങ്ങൾ പുതുക്കുക.",
-    nextStep: "അടുത്ത ചുവടിന് നിങ്ങളുടെ ദിവസത്തിൽ ഇടം നൽകൂ.",
-    taskName: "ടാസ്കിന്റെ പേര്", taskPlaceholder: "എന്താണ് ചെയ്യേണ്ടത്?",
-    startTime: "ആരംഭ സമയം", duration: "ദൈർഘ്യം", priority: "മുൻഗണന",
-    category: "വിഭാഗം", cancel: "റദ്ദാക്കുക", saveChanges: "മാറ്റങ്ങൾ സൂക്ഷിക്കുക",
-    create: "ടാസ്ക് സൃഷ്ടിക്കുക", Personal: "വ്യക്തിപരം", Study: "പഠനം",
-    Work: "ജോലി", Health: "ആരോഗ്യം", Project: "പ്രോജക്റ്റ്", Other: "മറ്റുള്ളവ",
-    Low: "കുറഞ്ഞത്", Medium: "ഇടത്തരം", High: "ഉയർന്നത്",
-    markComplete: "പൂർത്തിയാക്കുക", markIncomplete: "പൂർത്തിയാകാത്തതായി മാറ്റുക",
-    delete: "ടാസ്ക് നീക്കം ചെയ്യുക", edit: "ടാസ്ക് തിരുത്തുക", language: "ഭാഷ",
-    voiceLabel: "ശബ്ദ ഓർമ്മപ്പെടുത്തലുകൾ", notificationLabel: "ബ്രൗസർ അറിയിപ്പുകൾ",
-    settingsTitle: "നിങ്ങളുടെ മുൻഗണനകൾ",
-    settingsDescription: "ഭാഷയും ഓർമ്മപ്പെടുത്തൽ മുൻഗണനകളും തിരഞ്ഞെടുക്കൂ.",
-    voiceOn: "ശബ്ദ ഓർമ്മപ്പെടുത്തൽ ഓൺ", voiceOff: "ശബ്ദ ഓർമ്മപ്പെടുത്തൽ ഓഫ്",
-    enableNotifications: "അറിയിപ്പുകൾ പ്രവർത്തനക്ഷമമാക്കുക",
-    notificationReady: "ബ്രൗസർ അറിയിപ്പുകൾ പ്രവർത്തനക്ഷമമാണ്.",
-    permissionDenied: "ബ്രൗസർ ക്രമീകരണങ്ങളിൽ അറിയിപ്പുകൾ അനുവദിക്കണം.",
-    unavailable: "ഈ ബ്രൗസറിൽ അറിയിപ്പുകൾ ലഭ്യമല്ല.",
-    startReminder: "ഇപ്പോൾ തുടങ്ങേണ്ട ടാസ്ക്", endReminder: "നിശ്ചയിച്ച സമയം അവസാനിച്ചു",
-    taskStarting: "ടാസ്ക് ഇപ്പോൾ തുടങ്ങുന്നു.",
-    endAlert: "ടാസ്കിന്റെ നിശ്ചയിച്ച സമയം അവസാനിച്ചു.",
-    conflictTitle: "ഷെഡ്യൂൾ സമയങ്ങൾ തമ്മിൽ മുട്ടുന്നു",
-    conflictDescription: "ആവശ്യമെങ്കിൽ നിർദ്ദേശിച്ച സമയത്തേക്ക് മാറ്റാം.",
-    moveAfter: "സമയത്തിലേക്ക് മാറ്റുക", keepSchedule: "നിലവിലെ ഷെഡ്യൂൾ നിലനിർത്തുക",
-    moved: "ടാസ്ക് മാറ്റി.", noConflicts: "ഷെഡ്യൂൾ സമയങ്ങൾ തമ്മിൽ മുട്ടുന്നില്ല.",
-    alerts: "ഷെഡ്യൂൾ പരിശോധന", languageHint: "ഇഷ്ടമുള്ള ഭാഷ തിരഞ്ഞെടുക്കൂ.",
-    english: "English", malayalam: "മലയാളം", priorityLabel: "മുൻഗണന",
+    Overview: "അവലോകനം",
+    "My Schedule": "ഷെഡ്യൂൾ",
+    Insights: "വിശകലനം",
+    Settings: "ക്രമീകരണങ്ങൾ",
+    workspace: "വർക്ക്സ്പേസ്",
+    search: "തിരയുക...",
+    newTask: "പുതിയ ടാസ്ക്",
+    welcome: "ഇന്നത്തെ ഷെഡ്യൂൾ",
+    subtitle: "ടാസ്കുകളും സമയക്രമവും.",
+    tasks: "ടാസ്കുകൾ",
+    total: "ആകെ",
+    remaining: "ബാക്കി",
+    completed: "പൂർത്തിയായി",
+    marked: "പൂർത്തിയായവ",
+    timeRemaining: "ബാക്കി സമയം",
+    planned: "ആസൂത്രണം",
+    completion: "പുരോഗതി",
+    progress: "നിരക്ക്",
+    yourPlan: "ഷെഡ്യൂൾ",
+    yourProgress: "വിശകലനം",
+    yourSchedule: "ഇന്നത്തെ ടാസ്കുകൾ",
+    allTasks: "എല്ലാം",
+    upcoming: "വരാനിരിക്കുന്നവ",
+    summary: "സംഗ്രഹം",
+    organised: "സമയക്രമം.",
+    unfinished: "ബാക്കിയുള്ളവ.",
+    taskCompletion: "പൂർത്തീകരണം",
+    viewAll: "എല്ലാം കാണുക",
+    plannedTime: "ആസൂത്രിത സമയം",
+    highPriority: "ഉയർന്ന മുൻഗണന",
+    remainingTasks: "ബാക്കി",
+    noMatches: "കണ്ടെത്തിയില്ല",
+    nothingUpcoming: "ടാസ്കുകളില്ല",
+    startHere: "തുടങ്ങാം",
+    searchTip: "മറ്റൊരു വാക്ക് നൽകൂ.",
+    firstTask: "ആദ്യ ടാസ്ക് ചേർക്കൂ.",
+    createFirst: "ടാസ്ക് ചേർക്കുക",
+    addAnother: "ടാസ്ക് ചേർക്കുക",
+    current: "നിലവിലെ ടാസ്ക്",
+    inProgress: "പുരോഗമിക്കുന്നു",
+    upNext: "അടുത്തത്",
+    timeOver: "സമയം കഴിഞ്ഞു",
+    timeLeft: "ബാക്കി സമയം",
+    untilEnd: "അവസാനിക്കാൻ",
+    reviewNext: "അടുത്ത ടാസ്ക്",
+    scheduleAlert: "ഷെഡ്യൂൾ അലർട്ട്",
+    noAuto: "മാറ്റങ്ങൾ നിങ്ങൾ തീരുമാനിക്കൂ.",
+    nextComing: "അടുത്ത ടാസ്ക് ഉടൻ തുടങ്ങും.",
+    caughtUp: "എല്ലാം കഴിഞ്ഞു!",
+    nothingScheduled: "ടാസ്കുകളൊന്നുമില്ല",
+    noRemaining: "ബാക്കി ടാസ്കുകളില്ല.",
+    addToSee: "ടാസ്ക് ചേർക്കൂ.",
+    createTask: "ടാസ്ക് ഉണ്ടാക്കുക",
+    progressOver: "പുരോഗതി",
+    completedOf: "പൂർത്തിയായി.",
+    footer: "ORDO // ALERT SCHEDULER",
+    refine: "തിരുത്തുക",
+    makeHappen: "പുതിയത്",
+    editTask: "ടാസ്ക് തിരുത്തുക",
+    createTitle: "ടാസ്ക് ഉണ്ടാക്കുക",
+    updateDetails: "വിവരങ്ങൾ നൽകൂ.",
+    nextStep: "ഷെഡ്യൂളിൽ ചേർക്കൂ.",
+    taskName: "പേര്",
+    taskPlaceholder: "എന്താണ് ചെയ്യേണ്ടത്?",
+    startTime: "സമയം",
+    duration: "ദൈർഘ്യം",
+    priority: "മുൻഗണന",
+    category: "വിഭാഗം",
+    cancel: "റദ്ദാക്കുക",
+    saveChanges: "സൂക്ഷിക്കുക",
+    create: "ചേർക്കുക",
+    Personal: "വ്യക്തിപരം",
+    Study: "പഠനം",
+    Work: "ജോലി",
+    Health: "ആരോഗ്യം",
+    Project: "പ്രോജക്റ്റ്",
+    Other: "മറ്റുള്ളവ",
+    Low: "കുറഞ്ഞത്",
+    Medium: "ഇടത്തരം",
+    High: "ഉയർന്നത്",
+    markComplete: "പൂർത്തിയാക്കുക",
+    markIncomplete: "മാറ്റുക",
+    delete: "നീക്കം ചെയ്യുക",
+    edit: "തിരുത്തുക",
+    language: "ഭാഷ",
+    voiceLabel: "ശബ്ദ അലർട്ടുകൾ",
+    notificationLabel: "അറിയിപ്പുകൾ",
+    settingsTitle: "ക്രമീകരണങ്ങൾ",
+    settingsDescription: "ശബ്ദം, അറിയിപ്പുകൾ, ഭാഷ എന്നിവ തിരഞ്ഞെടുക്കൂ.",
+    voiceOn: "ശബ്ദം ഓൺ",
+    voiceOff: "ശബ്ദം ഓഫ്",
+    enableNotifications: "അറിയിപ്പുകൾ നൽകുക",
+    notificationReady: "അറിയിപ്പുകൾ സജ്ജമാണ്.",
+    permissionDenied: "അനുമതി നൽകണം.",
+    unavailable: "ലഭ്യമല്ല.",
+    startReminder: "തുടങ്ങാൻ സമയം",
+    endReminder: "സമയം അവസാനിച്ചു",
+    taskStarting: "ഇപ്പോൾ തുടങ്ങുന്നു.",
+    endAlert: "സമയം കഴിഞ്ഞു.",
+    conflictTitle: "സമയങ്ങൾ തമ്മിൽ മുട്ടുന്നു",
+    conflictDescription: "സമയങ്ങൾ മാറ്റാം.",
+    moveAfter: "മാറ്റുക",
+    keepSchedule: "നിലനിർത്തുക",
+    moved: "മാറ്റി.",
+    noConflicts: "മുട്ടുന്നില്ല.",
+    alerts: "പരിശോധന",
+    languageHint: "ഭാഷ തിരഞ്ഞെടുക്കൂ.",
+    english: "English",
+    malayalam: "മലയാളം",
+    priorityLabel: "മുൻഗണന",
   },
 };
 
+function getDefaultTime() {
+  const d = new Date();
+  const h = String(d.getHours()).padStart(2, "0");
+  const m = String(Math.floor(d.getMinutes() / 5) * 5).padStart(2, "0");
+  return `${h}:${m}`;
+}
+
 function readTasks() {
   try {
-    const tasks = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const tasks = JSON.parse(raw);
     if (!Array.isArray(tasks)) return [];
-    return tasks.filter((task) => task?.id && task?.title).map((task) => ({
+
+    // Filter out old prototype mock tasks so users start clean
+    const cleanTasks = tasks.filter(
+      (task) =>
+        task?.id &&
+        task?.title &&
+        !["task-1", "task-2", "task-3", "task-4"].includes(task.id)
+    );
+
+    return cleanTasks.map((task) => ({
       ...task,
       duration: Number(task.duration) || 30,
       priority: ["Low", "Medium", "High"].includes(task.priority) ? task.priority : "Medium",
-      category: task.category || "Personal",
-      time: task.time || "17:00",
+      category: task.category || "Work",
+      time: task.time || getDefaultTime(),
       done: Boolean(task.done),
     }));
   } catch {
@@ -193,7 +349,8 @@ function timeLabel(time, language) {
   const date = new Date();
   date.setHours(h || 0, m || 0, 0, 0);
   return new Intl.DateTimeFormat(language === "ml" ? "ml-IN" : "en-IN", {
-    hour: "numeric", minute: "2-digit",
+    hour: "numeric",
+    minute: "2-digit",
   }).format(date);
 }
 
@@ -209,7 +366,9 @@ function countdown(ms) {
 
 function dayLabel(date, language) {
   return new Intl.DateTimeFormat(language === "ml" ? "ml-IN" : "en", {
-    weekday: "long", month: "long", day: "numeric",
+    weekday: "long",
+    month: "long",
+    day: "numeric",
   }).format(date);
 }
 
@@ -222,26 +381,34 @@ function speak(message, language) {
   window.speechSynthesis.speak(utterance);
 }
 
-function App() {
+export default function App() {
   const [tasks, setTasks] = useState(readTasks);
   const [settings, setSettings] = useState(readSettings);
+  const [profile, setProfile] = useState(getStoredProfile);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [activeNav, setActiveNav] = useState("Overview");
   const [showForm, setShowForm] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [search, setSearch] = useState("");
+  const [filterMode, setFilterMode] = useState("all"); // all, pending, done
   const [editingId, setEditingId] = useState(null);
   const [title, setTitle] = useState("");
-  const [time, setTime] = useState("17:00");
+  const [time, setTime] = useState(getDefaultTime);
   const [duration, setDuration] = useState("30");
   const [priority, setPriority] = useState("Medium");
-  const [category, setCategory] = useState("Study");
+  const [category, setCategory] = useState("Work");
   const [now, setNow] = useState(Date.now());
   const [toast, setToast] = useState("");
+  const [isAudioMuted, setIsAudioMuted] = useState(false);
+  const [snoozeUntil, setSnoozeUntil] = useState(0);
+
   const spoken = useRef(new Set());
+  const alarmPlayingRef = useRef(false);
 
   const language = settings.language;
   const t = (key) => TEXT[language]?.[key] || TEXT.en[key] || key;
 
+  // Persist tasks and settings
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
   }, [tasks]);
@@ -250,18 +417,68 @@ function App() {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   }, [settings]);
 
+  // Tick clock every second
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
 
+  // Toast auto-clear
   useEffect(() => {
     if (!toast) return;
-    const timer = window.setTimeout(() => setToast(""), 2500);
+    const timer = window.setTimeout(() => setToast(""), 3000);
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  // Existing task-time voice reminders, without a reminder panel on the dashboard.
+  // Real-time schedule cascade & stress calculation
+  const cascadeInfo = useMemo(() => {
+    return calculateScheduleCascade(tasks, now, profile);
+  }, [tasks, now, profile]);
+
+  // Play procedural stress alarm when a task overruns
+  useEffect(() => {
+    const isOverdue = Boolean(cascadeInfo.overdueTask);
+    const isStressAlarm = cascadeInfo.stressState === "stress-alarm" || cascadeInfo.stressState === "critical";
+    const isSnoozed = now < snoozeUntil;
+
+    if (isOverdue && isStressAlarm && !isSnoozed && !isAudioMuted && settings.voice) {
+      if (!alarmPlayingRef.current) {
+        alarmPlayingRef.current = true;
+        startStressAlarmLoop(
+          {
+            baseFreq: profile.soundFreq,
+            wave: profile.soundWave,
+            type: profile.soundType,
+          },
+          cascadeInfo.stressScore,
+          profile.soundVolume || 0.7
+        );
+      }
+    } else {
+      if (alarmPlayingRef.current) {
+        alarmPlayingRef.current = false;
+        stopStressAlarm();
+      }
+    }
+
+    return () => {
+      if (alarmPlayingRef.current) {
+        alarmPlayingRef.current = false;
+        stopStressAlarm();
+      }
+    };
+  }, [
+    cascadeInfo.overdueTask,
+    cascadeInfo.stressState,
+    cascadeInfo.stressScore,
+    now,
+    snoozeUntil,
+    isAudioMuted,
+    settings.voice,
+    profile,
+  ]);
+
+  // Task-time voice announcements
   useEffect(() => {
     const checkReminders = () => {
       const current = Date.now();
@@ -283,26 +500,12 @@ function App() {
           if (spoken.current.has(event.key)) return;
           spoken.current.add(event.key);
 
-          const message = event.kind === "start"
-            ? `${task.title}. ${t("taskStarting")}`
-            : `${task.title}. ${t("endAlert")}`;
+          const message =
+            event.kind === "start"
+              ? `${task.title}. ${t("taskStarting")}`
+              : `${task.title}. ${t("endAlert")}`;
 
           if (settings.voice) speak(message, language);
-
-          if (
-            settings.notifications &&
-            "Notification" in window &&
-            Notification.permission === "granted"
-          ) {
-            try {
-              new Notification(
-                event.kind === "start" ? `${t("startReminder")} ${task.title}` : `${t("endReminder")} ${task.title}`,
-                { body: event.kind === "start" ? t("taskStarting") : t("endAlert"), icon: "/ordo-logo.png" }
-              );
-            } catch {
-              // Notification delivery depends on browser permission and support.
-            }
-          }
         });
       });
     };
@@ -310,7 +513,7 @@ function App() {
     checkReminders();
     const timer = window.setInterval(checkReminders, 1000);
     return () => window.clearInterval(timer);
-  }, [tasks, settings.voice, settings.notifications, language]);
+  }, [tasks, settings.voice, language, t]);
 
   const sortedTasks = useMemo(
     () => [...tasks].sort((a, b) => a.time.localeCompare(b.time) || a.title.localeCompare(b.title)),
@@ -320,32 +523,30 @@ function App() {
   const visibleTasks = useMemo(() => {
     const query = search.trim().toLowerCase();
     return sortedTasks.filter((task) => {
-      const match = task.title.toLowerCase().includes(query) ||
-        task.category.toLowerCase().includes(query);
+      const match =
+        task.title.toLowerCase().includes(query) || task.category.toLowerCase().includes(query);
       if (!match) return false;
-      if (activeNav === "My schedule") return !task.done;
+      if (filterMode === "pending") return !task.done;
+      if (filterMode === "done") return task.done;
       return true;
     });
-  }, [sortedTasks, search, activeNav]);
+  }, [sortedTasks, search, filterMode]);
 
   const completed = tasks.filter((task) => task.done).length;
   const pending = tasks.length - completed;
-  const progress = tasks.length ? Math.round(completed / tasks.length * 100) : 0;
-  const totalMinutes = tasks.filter((task) => !task.done)
+  const progress = tasks.length ? Math.round((completed / tasks.length) * 100) : 0;
+  const totalMinutes = tasks
+    .filter((task) => !task.done)
     .reduce((sum, task) => sum + Number(task.duration || 0), 0);
-  const allMinutes = tasks.reduce((sum, task) => sum + Number(task.duration || 0), 0);
 
-  const currentTask = useMemo(() => sortedTasks
-    .filter((task) => !task.done && taskStart(task) <= now && now < taskEnd(task))
-    .sort((a, b) => taskStart(b) - taskStart(a))[0] || null, [sortedTasks, now]);
-
-  const nextTask = useMemo(() => sortedTasks
-    .filter((task) => !task.done && taskStart(task) > now)
-    .sort((a, b) => taskStart(a) - taskStart(b))[0] || null, [sortedTasks, now]);
-
-  const overrunTask = useMemo(() => sortedTasks
-    .filter((task) => !task.done && taskStart(task) <= now && taskEnd(task) <= now)
-    .sort((a, b) => taskEnd(b) - taskEnd(a))[0] || null, [sortedTasks, now]);
+  const currentTask = cascadeInfo.inProgressTask;
+  const nextTask = useMemo(
+    () =>
+      sortedTasks
+        .filter((task) => !task.done && taskStart(task) > now)
+        .sort((a, b) => taskStart(a) - taskStart(b))[0] || null,
+    [sortedTasks, now]
+  );
 
   const conflicts = useMemo(() => {
     const active = tasks.filter((task) => !task.done).sort((a, b) => taskStart(a) - taskStart(b));
@@ -356,14 +557,19 @@ function App() {
       }
     }
     return found;
-  }, [tasks, now]);
+  }, [tasks]);
 
   function setPreference(key, value) {
     setSettings((old) => ({ ...old, [key]: value }));
   }
 
+  function handleProfileUpdate(updatedProfile) {
+    setProfile(updatedProfile);
+    setToast(language === "ml" ? "അലാറം പുതുക്കി." : "Alarm profile updated.");
+  }
+
   function toggleTask(id) {
-    setTasks((old) => old.map((task) => task.id === id ? { ...task, done: !task.done } : task));
+    setTasks((old) => old.map((task) => (task.id === id ? { ...task, done: !task.done } : task)));
   }
 
   function deleteTask(id) {
@@ -373,10 +579,10 @@ function App() {
   function resetForm() {
     setEditingId(null);
     setTitle("");
-    setTime("17:00");
+    setTime(getDefaultTime());
     setDuration("30");
     setPriority("Medium");
-    setCategory("Study");
+    setCategory("Work");
   }
 
   function openNewTask() {
@@ -387,11 +593,62 @@ function App() {
   function openEditTask(task) {
     setEditingId(task.id);
     setTitle(task.title);
-    setTime(task.time || "17:00");
+    setTime(task.time || getDefaultTime());
     setDuration(String(task.duration || 30));
     setPriority(task.priority || "Medium");
-    setCategory(task.category || "Personal");
+    setCategory(task.category || "Work");
     setShowForm(true);
+  }
+
+  function clearAllTasks() {
+    if (window.confirm("Clear all tasks and start fresh?")) {
+      setTasks([]);
+      stopStressAlarm();
+      setToast(language === "ml" ? "എല്ലാം നീക്കം ചെയ്തു." : "All tasks cleared.");
+    }
+  }
+
+  function loadSampleTemplate() {
+    const nowH = new Date().getHours();
+    const pad = (n) => String(n).padStart(2, "0");
+    const t1 = `${pad(Math.max(0, nowH - 1))}:00`;
+    const t2 = `${pad(nowH)}:00`;
+    const t3 = `${pad((nowH + 1) % 24)}:15`;
+
+    const sample = [
+      {
+        id: `sample-1-${Date.now()}`,
+        title: "Focus Block: Deep Work",
+        time: t1,
+        duration: 45,
+        priority: "High",
+        category: "Work",
+        done: false,
+        createdAt: Date.now() - 3600000,
+      },
+      {
+        id: `sample-2-${Date.now()}`,
+        title: "Project Review",
+        time: t2,
+        duration: 30,
+        priority: "Medium",
+        category: "Project",
+        done: false,
+        createdAt: Date.now() - 1800000,
+      },
+      {
+        id: `sample-3-${Date.now()}`,
+        title: "Wrap-up & Planning",
+        time: t3,
+        duration: 30,
+        priority: "Low",
+        category: "Personal",
+        done: false,
+        createdAt: Date.now(),
+      },
+    ];
+    setTasks(sample);
+    setToast(language === "ml" ? "സാമ്പിൾ ടാസ്കുകൾ ചേർത്തു." : "Sample routine loaded.");
   }
 
   function saveTask(event) {
@@ -400,16 +657,27 @@ function App() {
     if (!cleanTitle) return;
 
     const data = {
-      title: cleanTitle, time, duration: Number(duration), priority, category,
+      title: cleanTitle,
+      time,
+      duration: Number(duration),
+      priority,
+      category,
     };
 
     if (editingId) {
-      setTasks((old) => old.map((task) => task.id === editingId ? { ...task, ...data } : task));
+      setTasks((old) => old.map((task) => (task.id === editingId ? { ...task, ...data } : task)));
+      setToast(language === "ml" ? "ടാസ്ക് പുതുക്കി." : "Task updated.");
     } else {
-      setTasks((old) => [...old, {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        ...data, done: false, createdAt: Date.now(),
-      }]);
+      setTasks((old) => [
+        ...old,
+        {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          ...data,
+          done: false,
+          createdAt: Date.now(),
+        },
+      ]);
+      setToast(language === "ml" ? "ടാസ്ക് ചേർത്തു." : "Task added.");
     }
 
     setShowForm(false);
@@ -422,9 +690,40 @@ function App() {
     setSearch("");
   }
 
-  function moveTask(id, newTime) {
-    setTasks((old) => old.map((task) => task.id === id ? { ...task, time: newTime } : task));
-    setToast(t("moved"));
+  function handleDominoShift() {
+    const shiftMin = cascadeInfo.overrunMinutes || 15;
+    const targetTaskId = cascadeInfo.overdueTask?.id;
+    if (!targetTaskId) return;
+
+    const updated = applyDominoShift(tasks, targetTaskId, shiftMin);
+    setTasks(updated);
+    stopStressAlarm();
+    setToast(
+      language === "ml"
+        ? `ഷെഡ്യൂൾ +${shiftMin} മിനിറ്റ് മാറ്റി.`
+        : `Schedule auto-shifted by +${shiftMin}m.`
+    );
+  }
+
+  function handleMarkDoneAndAdvance() {
+    if (!cascadeInfo.overdueTask) return;
+    const overdueId = cascadeInfo.overdueTask.id;
+    setTasks((old) => old.map((t) => (t.id === overdueId ? { ...t, done: true } : t)));
+    stopStressAlarm();
+    setToast(language === "ml" ? "ടാസ്ക് പൂർത്തിയായി!" : "Task completed!");
+  }
+
+  function handleSnooze() {
+    setSnoozeUntil(Date.now() + 5 * 60000);
+    stopStressAlarm();
+    setToast(language === "ml" ? "5 മിനിറ്റ് സ്നൂസ് ചെയ്തു." : "Snoozed for 5 minutes.");
+  }
+
+  function handleToggleMute() {
+    if (!isAudioMuted) {
+      stopStressAlarm();
+    }
+    setIsAudioMuted(!isAudioMuted);
   }
 
   async function enableNotifications() {
@@ -442,202 +741,603 @@ function App() {
     }
   }
 
-  const heading = activeNav === "Overview" ? t("welcome")
-    : activeNav === "My schedule" ? t("upcoming")
-    : activeNav === "My tasks" ? t("allTasks")
-    : activeNav === "Insights" ? t("yourProgress")
-    : t("settingsTitle");
+  const heading =
+    activeNav === "Overview"
+      ? t("welcome")
+      : activeNav === "My Schedule"
+      ? "My Schedule"
+      : activeNav === "Insights"
+      ? "Insights"
+      : t("settingsTitle");
 
   return (
     <div className={`app-shell ${language === "ml" ? "language-ml" : ""}`}>
-      {mobileMenu && <button className="mobile-backdrop" aria-label="Close menu" onClick={() => setMobileMenu(false)} />}
+      {/* Background canvas */}
+      <BackgroundCanvas
+        stressScore={cascadeInfo.stressScore}
+        stressState={cascadeInfo.stressState}
+      />
 
+      {mobileMenu && (
+        <button
+          className="mobile-backdrop"
+          aria-label="Close menu"
+          onClick={() => setMobileMenu(false)}
+        />
+      )}
+
+      {/* Sidebar */}
       <aside className={`sidebar ${mobileMenu ? "sidebar-open" : ""}`}>
         <div className="brand">
-          <img src="/ordo-logo.png" alt="Ordo" className="brand-logo" />
-          <button className="icon-button mobile-close" aria-label="Close navigation" onClick={() => setMobileMenu(false)}><X size={19} /></button>
+          <OrdoLogo />
+          <button
+            className="icon-button mobile-close"
+            aria-label="Close navigation"
+            onClick={() => setMobileMenu(false)}
+          >
+            <X size={19} />
+          </button>
         </div>
 
         <div className="workspace-label">{t("workspace")}</div>
         <nav className="nav-list">
           {NAV.map(({ label, icon: Icon }) => (
-            <button key={label} className={`nav-item ${activeNav === label ? "nav-active" : ""}`} onClick={() => selectNav(label)}>
+            <button
+              key={label}
+              className={`nav-item ${activeNav === label ? "nav-active" : ""}`}
+              onClick={() => selectNav(label)}
+            >
               <Icon size={18} strokeWidth={1.8} />
               <span>{t(label)}</span>
-              {label === "My tasks" && <span className="nav-count">{tasks.length}</span>}
+              {label === "My Schedule" && <span className="nav-count">{tasks.length}</span>}
             </button>
           ))}
         </nav>
 
-        {/* Clean sidebar: no extra bottom card or profile block. */}
+        {/* Sidebar bottom: only Settings */}
         <div className="sidebar-bottom">
-          <button className={`nav-item ${activeNav === "Settings" ? "nav-active" : ""}`} onClick={() => selectNav("Settings")}>
-            <Settings size={18} strokeWidth={1.8} /><span>{t("Settings")}</span>
+          <button
+            className={`nav-item ${activeNav === "Settings" ? "nav-active" : ""}`}
+            onClick={() => selectNav("Settings")}
+          >
+            <Settings size={18} strokeWidth={1.8} />
+            <span>{t("Settings")}</span>
           </button>
         </div>
       </aside>
 
+      {/* Main Area */}
       <main className="main-area">
         <header className="topbar">
-          <button className="icon-button mobile-menu-button" aria-label="Open navigation" onClick={() => setMobileMenu(true)}><Menu size={21} /></button>
-          <div className="breadcrumb">Ordo <span>/</span> <strong>{t(activeNav)}</strong></div>
+          <button
+            className="icon-button mobile-menu-button"
+            aria-label="Open navigation"
+            onClick={() => setMobileMenu(true)}
+          >
+            <Menu size={20} />
+          </button>
+
+          <div className="breadcrumb">
+            Ordo <span>/</span> <strong>{t(activeNav)}</strong>
+          </div>
 
           <div className="topbar-actions">
+            {/* Live Stress Status Pill */}
+            <div
+              className={`top-stress-pill ${
+                cascadeInfo.stressScore >= 75
+                  ? "stress-pill-critical"
+                  : cascadeInfo.stressScore >= 35
+                  ? "stress-pill-warning"
+                  : "stress-pill-calm"
+              }`}
+            >
+              <span>●</span>
+              <span>
+                {cascadeInfo.stressScore >= 75
+                  ? `STRESS: ${cascadeInfo.stressScore}%`
+                  : cascadeInfo.stressScore >= 35
+                  ? `PRESSURE: ${cascadeInfo.stressScore}%`
+                  : `FLOW: ${cascadeInfo.stressScore}%`}
+              </span>
+            </div>
+
+            {/* Persona Customizer Pill */}
+            <button
+              className="persona-top-badge"
+              onClick={() => setShowProfileModal(true)}
+              title="Customize alarm tone and cushion"
+            >
+              <Zap size={13} />
+              <span>{profile.customName || "My Ordo"}</span>
+              <strong>{profile.soundFreq}Hz</strong>
+            </button>
+
+            {/* Search Box */}
             <label className="search-box">
-              <Search size={17} />
-              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("search")} aria-label={t("search")} />
-              <kbd>⌕</kbd>
+              <Search size={15} />
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder={t("search")}
+                aria-label={t("search")}
+              />
             </label>
-            <button className="icon-button language-button" title={t("language")} aria-label={t("language")} onClick={() => setPreference("language", language === "en" ? "ml" : "en")}><Languages size={18} /></button>
-            <button className="icon-button voice-button" title={settings.voice ? t("voiceOn") : t("voiceOff")} aria-label={settings.voice ? t("voiceOff") : t("voiceOn")} onClick={() => setPreference("voice", !settings.voice)}>
-              {settings.voice ? <Volume2 size={18} /> : <VolumeX size={18} />}
+
+            {/* Language Switch */}
+            <button
+              className="icon-button"
+              title={t("language")}
+              aria-label={t("language")}
+              onClick={() => setPreference("language", language === "en" ? "ml" : "en")}
+            >
+              <Languages size={17} />
+            </button>
+
+            {/* Single Mute/Sound Toggle */}
+            <button
+              className="icon-button"
+              title={settings.voice && !isAudioMuted ? "Mute sound" : "Enable sound"}
+              aria-label={settings.voice && !isAudioMuted ? "Mute sound" : "Enable sound"}
+              onClick={() => {
+                if (settings.voice && !isAudioMuted) {
+                  setIsAudioMuted(true);
+                  stopStressAlarm();
+                } else {
+                  setIsAudioMuted(false);
+                  setPreference("voice", true);
+                }
+              }}
+            >
+              {settings.voice && !isAudioMuted ? <Volume2 size={17} /> : <VolumeX size={17} />}
             </button>
           </div>
         </header>
 
         <div className="page-content">
-                    {activeNav !== "Insights" && (
+          {/* Stress Alarm HUD Banner (triggers when a task runs late) */}
+          {cascadeInfo.overdueTask && (
+            <StressCascadeBanner
+              cascadeInfo={cascadeInfo}
+              onDominoShift={handleDominoShift}
+              onMarkDoneAndAdvance={handleMarkDoneAndAdvance}
+              onSnooze={handleSnooze}
+              isMuted={isAudioMuted || !settings.voice}
+              onToggleMute={handleToggleMute}
+            />
+          )}
+
+          {activeNav !== "Insights" && (
             <section className="welcome-row">
-            <div>
-              <div className="eyebrow"><span className="status-dot" />{dayLabel(new Date(now), language).toUpperCase()}</div>
-              <h1>{heading}</h1>
-              <p className="welcome-subtitle">{activeNav === "Settings" ? t("settingsDescription") : t("subtitle")}</p>
-            </div>
-            {activeNav !== "Settings" && <button className="primary-button" onClick={openNewTask}><Plus size={18} /> {t("newTask")}</button>}
-                      </section>
+              <div>
+                <div className="eyebrow">
+                  <span className="status-dot" />
+                  {dayLabel(new Date(now), language).toUpperCase()}
+                </div>
+                <h1>{heading}</h1>
+                <p className="welcome-subtitle">
+                  {activeNav === "Settings" ? t("settingsDescription") : t("subtitle")}
+                </p>
+              </div>
+              {activeNav !== "Settings" && (
+                <button className="primary-button" onClick={openNewTask}>
+                  <Plus size={17} /> {t("newTask")}
+                </button>
+              )}
+            </section>
           )}
 
           {activeNav === "Settings" ? (
+            /* SETTINGS VIEW */
             <section className="panel settings-panel">
               <div className="section-kicker">{t("Settings").toUpperCase()}</div>
               <h2>{t("settingsTitle")}</h2>
               <p>{t("settingsDescription")}</p>
 
               <div className="settings-option">
-                <div><strong>{t("language")}</strong><span>{t("languageHint")}</span></div>
+                <div>
+                  <strong>Acoustic Alarm & Cushion</strong>
+                  <span>Set your frequency, sound pattern, and grace period.</span>
+                </div>
+                <button
+                  className="secondary-button"
+                  onClick={() => setShowProfileModal(true)}
+                >
+                  <Sliders size={15} /> Customize Alarm
+                </button>
+              </div>
+
+              <div className="settings-option">
+                <div>
+                  <strong>{t("language")}</strong>
+                  <span>{t("languageHint")}</span>
+                </div>
                 <div className="settings-language">
-                  <button className={`secondary-button ${language === "en" ? "setting-selected" : ""}`} onClick={() => setPreference("language", "en")}>{t("english")}</button>
-                  <button className={`secondary-button ${language === "ml" ? "setting-selected" : ""}`} onClick={() => setPreference("language", "ml")}>{t("malayalam")}</button>
+                  <button
+                    className={`secondary-button ${language === "en" ? "setting-selected" : ""}`}
+                    onClick={() => setPreference("language", "en")}
+                  >
+                    {t("english")}
+                  </button>
+                  <button
+                    className={`secondary-button ${language === "ml" ? "setting-selected" : ""}`}
+                    onClick={() => setPreference("language", "ml")}
+                  >
+                    {t("malayalam")}
+                  </button>
                 </div>
               </div>
 
               <div className="settings-option">
-                <div><strong>{t("voiceLabel")}</strong><span>{settings.voice ? t("voiceOn") : t("voiceOff")}</span></div>
-                <button className={`toggle-switch ${settings.voice ? "toggle-on" : ""}`} role="switch" aria-checked={settings.voice} onClick={() => setPreference("voice", !settings.voice)}><span /></button>
+                <div>
+                  <strong>Sound Alerts</strong>
+                  <span>{settings.voice ? t("voiceOn") : t("voiceOff")}</span>
+                </div>
+                <button
+                  className={`toggle-switch ${settings.voice ? "toggle-on" : ""}`}
+                  role="switch"
+                  aria-checked={settings.voice}
+                  onClick={() => setPreference("voice", !settings.voice)}
+                >
+                  <span />
+                </button>
               </div>
 
               <div className="settings-option">
-                <div><strong>{t("notificationLabel")}</strong><span>
-  {settings.notifications
-    ? t("notificationReady")
-    : t("enableNotifications")}
-</span></div>
-                <button className={`toggle-switch ${settings.notifications ? "toggle-on" : ""}`} role="switch" aria-checked={settings.notifications} onClick={enableNotifications}><span /></button>
+                <div>
+                  <strong>{t("notificationLabel")}</strong>
+                  <span>
+                    {settings.notifications
+                      ? t("notificationReady")
+                      : t("enableNotifications")}
+                  </span>
+                </div>
+                <button
+                  className={`toggle-switch ${settings.notifications ? "toggle-on" : ""}`}
+                  role="switch"
+                  aria-checked={settings.notifications}
+                  onClick={enableNotifications}
+                >
+                  <span />
+                </button>
+              </div>
+
+              <div className="settings-option">
+                <div>
+                  <strong>Clear All Tasks</strong>
+                  <span>Remove all tasks and reset schedule.</span>
+                </div>
+                <button
+                  className="secondary-button"
+                  style={{ color: "var(--neon-rose)", borderColor: "var(--border-neon-rose)" }}
+                  onClick={clearAllTasks}
+                >
+                  <Trash2 size={15} /> Clear Tasks
+                </button>
               </div>
 
               <div className="section-kicker">{t("alerts").toUpperCase()}</div>
-              {conflicts.length ? conflicts.map(({ first, second }) => {
-                const suggestedDate = new Date(taskEnd(first));
-                const suggested = `${String(suggestedDate.getHours()).padStart(2, "0")}:${String(suggestedDate.getMinutes()).padStart(2, "0")}`;
-                return (
-                  <div className="conflict-alert" key={`${first.id}-${second.id}`}>
-                    <div className="conflict-icon"><AlertTriangle size={19} /></div>
-                    <div className="conflict-copy">
-                      <strong>{t("conflictTitle")}</strong>
-                      <p>{first.title} · {timeLabel(first.time, language)} — {second.title} · {timeLabel(second.time, language)}</p>
-                      <span>{t("conflictDescription")}</span>
-                      <div className="conflict-actions">
-                        <button className="secondary-button" onClick={() => moveTask(second.id, suggested)}><CalendarClock size={15} /> {t("moveAfter")} {timeLabel(suggested, language)}</button>
-                        <button className="text-button" onClick={() => setToast(t("noConflicts"))}>{t("keepSchedule")}</button>
+              {conflicts.length ? (
+                conflicts.map(({ first, second }) => {
+                  const suggestedDate = new Date(taskEnd(first));
+                  const suggested = `${String(suggestedDate.getHours()).padStart(2, "0")}:${String(
+                    suggestedDate.getMinutes()
+                  ).padStart(2, "0")}`;
+                  return (
+                    <div className="conflict-alert" key={`${first.id}-${second.id}`}>
+                      <div className="conflict-icon">
+                        <AlertTriangle size={19} />
+                      </div>
+                      <div className="conflict-copy">
+                        <strong>{t("conflictTitle")}</strong>
+                        <p>
+                          {first.title} · {timeLabel(first.time, language)} — {second.title} ·{" "}
+                          {timeLabel(second.time, language)}
+                        </p>
+                        <div className="conflict-actions">
+                          <button
+                            className="secondary-button"
+                            onClick={() => {
+                              setTasks((old) =>
+                                old.map((t) => (t.id === second.id ? { ...t, time: suggested } : t))
+                              );
+                              setToast(t("moved"));
+                            }}
+                          >
+                            <CalendarClock size={15} /> {t("moveAfter")}{" "}
+                            {timeLabel(suggested, language)}
+                          </button>
+                          <button
+                            className="text-button"
+                            onClick={() => setToast(t("noConflicts"))}
+                          >
+                            {t("keepSchedule")}
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              }) : <div className="no-conflicts"><CircleCheck size={17} /><span>{t("noConflicts")}</span></div>}
+                  );
+                })
+              ) : (
+                <div className="no-conflicts">
+                  <CircleCheck size={17} />
+                  <span>{t("noConflicts")}</span>
+                </div>
+              )}
             </section>
-                        ) : activeNav === "Insights" ? (
+          ) : activeNav === "Insights" ? (
+            /* INSIGHTS VIEW */
             <Insights tasks={tasks} language={language} />
           ) : (
+            /* OVERVIEW & MY SCHEDULE VIEW */
             <>
               <section className="stats-grid">
-                <article className="stat-card"><div className="stat-top"><span>{t("tasks")}</span><span className="stat-icon"><CheckSquare size={17} /></span></div><div className="stat-number">{tasks.length}<span className="stat-unit"> {t("total")}</span></div><div className="stat-foot">{pending} {t("remaining")}</div></article>
-                <article className="stat-card"><div className="stat-top"><span>{t("completed")}</span><span className="stat-icon coral-icon"><CircleCheck size={17} /></span></div><div className="stat-number">{completed}<span className="stat-unit"> / {tasks.length}</span></div><div className="stat-foot">{t("marked")}</div></article>
-                <article className="stat-card"><div className="stat-top"><span>{t("timeRemaining")}</span><span className="stat-icon"><Clock3 size={17} /></span></div><div className="stat-number">{Math.floor(totalMinutes / 60)}<span className="stat-unit">h </span>{totalMinutes % 60}<span className="stat-unit">m</span></div><div className="stat-foot">{t("planned")}</div></article>
-                <article className="stat-card"><div className="stat-top"><span>{t("completion")}</span><span className="stat-icon"><BarChart3 size={17} /></span></div><div className="stat-number">{progress}<span className="stat-unit">%</span></div><div className="stat-foot">{t("progress")}</div></article>
+                <article className="stat-card">
+                  <div className="stat-top">
+                    <span>{t("tasks")}</span>
+                    <span className="stat-icon">
+                      <CalendarDays size={17} />
+                    </span>
+                  </div>
+                  <div className="stat-number">
+                    {tasks.length}
+                    <span className="stat-unit"> {t("total")}</span>
+                  </div>
+                  <div className="stat-foot">{pending} {t("remaining")}</div>
+                </article>
+
+                <article className="stat-card">
+                  <div className="stat-top">
+                    <span>{t("completed")}</span>
+                    <span className="stat-icon rose-icon">
+                      <CircleCheck size={17} />
+                    </span>
+                  </div>
+                  <div className="stat-number">
+                    {completed}
+                    <span className="stat-unit"> / {tasks.length}</span>
+                  </div>
+                  <div className="stat-foot">{t("marked")}</div>
+                </article>
+
+                <article className="stat-card">
+                  <div className="stat-top">
+                    <span>{t("timeRemaining")}</span>
+                    <span className="stat-icon">
+                      <Clock3 size={17} />
+                    </span>
+                  </div>
+                  <div className="stat-number">
+                    {Math.floor(totalMinutes / 60)}
+                    <span className="stat-unit">h </span>
+                    {totalMinutes % 60}
+                    <span className="stat-unit">m</span>
+                  </div>
+                  <div className="stat-foot">{t("planned")}</div>
+                </article>
+
+                <article className="stat-card">
+                  <div className="stat-top">
+                    <span>STRESS LEVEL</span>
+                    <span className="stat-icon rose-icon">
+                      <ShieldAlert size={17} />
+                    </span>
+                  </div>
+                  <div className="stat-number">
+                    {cascadeInfo.stressScore}
+                    <span className="stat-unit">%</span>
+                  </div>
+                  <div className="stat-foot">
+                    {cascadeInfo.overdueTask ? `+${cascadeInfo.overrunMinutes}m Overrun` : "Optimal"}
+                  </div>
+                </article>
               </section>
 
-              {overrunTask && activeNav === "Overview" && (
-                <section className="schedule-alert" role="status">
-                  <div className="schedule-alert-icon"><AlertTriangle size={20} /></div>
-                  <div className="schedule-alert-copy">
-                    <strong>{t("scheduleAlert")}</strong>
-                    <p>“{overrunTask.title}” — {countdown(now - taskEnd(overrunTask))} {t("timeOver")}.{nextTask ? ` ${nextTask.title} · ${timeLabel(nextTask.time, language)}` : ""}</p>
-                    <span>{t("noAuto")}</span>
+              {tasks.length === 0 && (
+                <div
+                  className="panel"
+                  style={{
+                    marginBottom: "20px",
+                    background: "linear-gradient(135deg, rgba(0, 194, 255, 0.1) 0%, rgba(255, 0, 127, 0.06) 100%)",
+                    border: "1px solid var(--border-cerulean)",
+                    padding: "22px 24px",
+                  }}
+                >
+                  <div className="section-kicker">GET STARTED</div>
+                  <h2 style={{ fontSize: "20px", margin: "6px 0", color: "#fff" }}>
+                    No Tasks Yet
+                  </h2>
+                  <p
+                    style={{
+                      color: "var(--text-muted)",
+                      fontSize: "12px",
+                      margin: "0 0 16px",
+                      maxWidth: "520px",
+                    }}
+                  >
+                    Add tasks to organize your day. If a task takes longer than planned, Ordo rings an alert.
+                  </p>
+                  <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                    <button className="primary-button" onClick={openNewTask}>
+                      <Plus size={16} /> Add Task
+                    </button>
+                    <button className="secondary-button" onClick={loadSampleTemplate}>
+                      <Sparkles size={15} /> Load Sample
+                    </button>
                   </div>
-                  {nextTask && <button className="secondary-button schedule-alert-button" onClick={() => { selectNav("My tasks"); setSearch(nextTask.title); }}>{t("reviewNext")}</button>}
-                </section>
+                </div>
               )}
 
               <section className="content-grid">
+                {/* Main Schedule Panel */}
                 <article className="panel schedule-panel">
                   <div className="panel-heading">
                     <div>
-                      <div className="section-kicker">{activeNav === "Insights" ? t("yourProgress") : t("yourPlan")}</div>
-                      <h2>{activeNav === "My tasks" ? t("allTasks") : activeNav === "My schedule" ? t("upcoming") : activeNav === "Insights" ? t("summary") : t("yourSchedule")}</h2>
-                      <p>{activeNav === "My schedule" ? t("unfinished") : t("organised")}</p>
+                      <div className="section-kicker">
+                        {activeNav === "My Schedule" ? "FULL TIMELINE" : t("yourPlan")}
+                      </div>
+                      <h2>{activeNav === "My Schedule" ? "All Tasks" : t("yourSchedule")}</h2>
                     </div>
-                    <button className="text-button" onClick={() => selectNav("My tasks")}>{t("viewAll")} <ArrowUpRight size={15} /></button>
+
+                    {/* Filter Pills */}
+                    {activeNav === "My Schedule" && (
+                      <div style={{ display: "flex", gap: "6px" }}>
+                        {["all", "pending", "done"].map((mode) => (
+                          <button
+                            key={mode}
+                            className={`secondary-button ${filterMode === mode ? "setting-selected" : ""}`}
+                            style={{ minHeight: "30px", padding: "0 10px", fontSize: "11px", textTransform: "capitalize" }}
+                            onClick={() => setFilterMode(mode)}
+                          >
+                            {mode}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div className="progress-section">
-                    <div className="progress-label"><span>{t("taskCompletion")}</span><strong>{progress}%</strong></div>
-                    <div className="progress-track"><div className="progress-fill" style={{ width: `${progress}%` }} /></div>
-                  </div>
-
-                  {activeNav === "Insights" && (
-                    <div className="insights-summary">
-                      <div><span>{t("plannedTime")}</span><strong>{Math.floor(allMinutes / 60)}h {allMinutes % 60}m</strong></div>
-                      <div><span>{t("highPriority")}</span><strong>{tasks.filter((task) => !task.done && task.priority === "High").length}</strong></div>
-                      <div><span>{t("remainingTasks")}</span><strong>{pending}</strong></div>
+                    <div className="progress-label">
+                      <span>{t("taskCompletion")}</span>
+                      <strong>{progress}%</strong>
                     </div>
-                  )}
+                    <div className="progress-track">
+                      <div className="progress-fill" style={{ width: `${progress}%` }} />
+                    </div>
+                  </div>
 
                   <div className="task-list">
                     {visibleTasks.length === 0 ? (
                       <div className="empty-state">
-                        <CalendarDays size={27} />
-                        <strong>{search ? t("noMatches") : activeNav === "My schedule" ? t("nothingUpcoming") : t("startHere")}</strong>
+                        <CalendarDays size={26} />
+                        <strong>{search ? t("noMatches") : t("startHere")}</strong>
                         <span>{search ? t("searchTip") : t("firstTask")}</span>
-                        {!search && <button className="secondary-button" onClick={openNewTask}><Plus size={15} /> {t("createFirst")}</button>}
+                        {!search && (
+                          <button className="secondary-button" onClick={openNewTask}>
+                            <Plus size={15} /> {t("createFirst")}
+                          </button>
+                        )}
                       </div>
-                    ) : visibleTasks.map((task) => {
-                      const end = taskEnd(task);
-                      const isCurrent = !task.done && now >= taskStart(task) && now < end;
-                      const isOverdue = !task.done && now >= end;
-                      return (
-                        <div className={`task-row ${task.done ? "task-done" : ""}`} key={task.id}>
-                          <button className="task-check" aria-label={task.done ? t("markIncomplete") : t("markComplete")} onClick={() => toggleTask(task.id)}>{task.done ? <CircleCheck size={21} /> : <Circle size={21} />}</button>
-                          <div className="task-main">
-                            <div className="task-title">{task.title}</div>
-                            <div className="task-meta"><span>{timeLabel(task.time, language)}</span><span className="meta-separator">·</span><span>{task.duration} min</span><span className="category-pill">{t(task.category)}</span>{isCurrent && <span className="task-status status-running">{t("inProgress")}</span>}{isOverdue && <span className="task-status status-overdue">{t("timeOver")}</span>}</div>
+                    ) : (
+                      visibleTasks.map((task) => {
+                        const end = taskEnd(task);
+                        const isCurrent = !task.done && now >= taskStart(task) && now < end;
+                        const isOverdue = !task.done && now >= end;
+                        return (
+                          <div
+                            className={`task-row ${task.done ? "task-done" : ""}`}
+                            key={task.id}
+                          >
+                            <button
+                              className="task-check"
+                              aria-label={task.done ? t("markIncomplete") : t("markComplete")}
+                              onClick={() => toggleTask(task.id)}
+                            >
+                              {task.done ? <CircleCheck size={20} /> : <Circle size={20} />}
+                            </button>
+                            <div className="task-main">
+                              <div className="task-title">{task.title}</div>
+                              <div className="task-meta">
+                                <span>{timeLabel(task.time, language)}</span>
+                                <span className="meta-separator">·</span>
+                                <span>{task.duration} min</span>
+                                <span className="category-pill">{t(task.category)}</span>
+                                {isCurrent && (
+                                  <span className="task-status status-running">
+                                    {t("inProgress")}
+                                  </span>
+                                )}
+                                {isOverdue && (
+                                  <span className="task-status status-overdue">
+                                    {t("timeOver")} (+{Math.floor((now - end) / 60000)}m)
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <span className={`priority priority-${task.priority.toLowerCase()}`}>
+                              {t(task.priority)}
+                            </span>
+                            <button
+                              className="icon-button task-action"
+                              aria-label={`${t("edit")} ${task.title}`}
+                              title={t("edit")}
+                              onClick={() => openEditTask(task)}
+                            >
+                              <Pencil size={13} />
+                            </button>
+                            <button
+                              className="icon-button task-delete"
+                              aria-label={`${t("delete")} ${task.title}`}
+                              title={t("delete")}
+                              onClick={() => deleteTask(task.id)}
+                            >
+                              <Trash2 size={14} />
+                            </button>
                           </div>
-                          <span className={`priority priority-${task.priority.toLowerCase()}`}>{t(task.priority)}</span>
-                          <button className="icon-button task-action" aria-label={`${t("edit")} ${task.title}`} title={t("edit")} onClick={() => openEditTask(task)}><Pencil size={14} /></button>
-                          <button className="icon-button task-delete" aria-label={`${t("delete")} ${task.title}`} title={t("delete")} onClick={() => deleteTask(task.id)}><Trash2 size={15} /></button>
-                        </div>
-                      );
-                    })}
+                        );
+                      })
+                    )}
                   </div>
-                  {tasks.length > 0 && <button className="add-task-link" onClick={openNewTask}><Plus size={16} /> {t("addAnother")}</button>}
+                  {tasks.length > 0 && (
+                    <button className="add-task-link" onClick={openNewTask}>
+                      <Plus size={15} /> {t("addAnother")}
+                    </button>
+                  )}
                 </article>
 
+                {/* Right Column: Active Task Card */}
                 <div className="right-column">
                   <article className="panel next-panel">
-                    <div className="section-kicker">{currentTask ? t("inProgress") : t("upNext")}</div>
-                    {currentTask ? (
+                    <div className="section-kicker">
+                      {cascadeInfo.overdueTask
+                        ? "ALERT: TIME OVER"
+                        : currentTask
+                        ? t("inProgress")
+                        : t("upNext")}
+                    </div>
+
+                    {cascadeInfo.overdueTask ? (
+                      <>
+                        <h2 className="next-title" style={{ color: "var(--neon-rose)" }}>
+                          {cascadeInfo.overdueTask.title}
+                        </h2>
+                        <div className="next-time">
+                          <Clock3 size={14} />
+                          {timeLabel(cascadeInfo.overdueTask.time, language)}
+                          <span>·</span>
+                          {cascadeInfo.overdueTask.duration} min planned
+                        </div>
+                        <div className="live-countdown countdown-overdue">
+                          <div className="countdown-label">TIME OVER PLAN</div>
+                          <strong>+{countdown(now - taskEnd(cascadeInfo.overdueTask))}</strong>
+                          <span>Next task pushed forward</span>
+                        </div>
+                        <div style={{ marginTop: "12px", display: "flex", gap: "8px" }}>
+                          <button
+                            className="action-btn btn-domino"
+                            style={{ flex: 1 }}
+                            onClick={handleDominoShift}
+                          >
+                            <FastForward size={14} /> Auto-Shift
+                          </button>
+                          <button
+                            className="action-btn btn-advance"
+                            style={{ flex: 1 }}
+                            onClick={handleMarkDoneAndAdvance}
+                          >
+                            <Check size={14} /> Done
+                          </button>
+                        </div>
+                      </>
+                    ) : currentTask ? (
                       <>
                         <h2 className="next-title">{currentTask.title}</h2>
-                        <div className="next-time"><Clock3 size={15} />{timeLabel(currentTask.time, language)}<span>·</span>{currentTask.duration} min</div>
+                        <div className="next-time">
+                          <Clock3 size={14} />
+                          {timeLabel(currentTask.time, language)}
+                          <span>·</span>
+                          {currentTask.duration} min
+                        </div>
                         <div className="live-countdown">
                           <div className="countdown-label">{t("timeLeft")}</div>
                           <strong>{countdown(taskEnd(currentTask) - now)}</strong>
@@ -647,53 +1347,170 @@ function App() {
                     ) : nextTask ? (
                       <>
                         <h2 className="next-title">{nextTask.title}</h2>
-                        <div className="next-time"><Clock3 size={15} />{t("startTime")}: {timeLabel(nextTask.time, language)}<span>·</span>{nextTask.duration} min</div>
+                        <div className="next-time">
+                          <Clock3 size={14} />
+                          {t("startTime")}: {timeLabel(nextTask.time, language)}
+                          <span>·</span>
+                          {nextTask.duration} min
+                        </div>
                         <div className="next-divider" />
-                        <div className="next-tip"><Clock3 size={17} /><span>{t("nextComing")}</span></div>
+                        <div className="next-tip">
+                          <Clock3 size={15} />
+                          <span>{t("nextComing")}</span>
+                        </div>
                       </>
                     ) : (
-                      <div className="all-done"><CircleCheck size={25} /><h3>{tasks.length ? t("caughtUp") : t("nothingScheduled")}</h3><p>{tasks.length ? t("noRemaining") : t("addToSee")}</p><button className="secondary-button" onClick={openNewTask}><Plus size={15} /> {t("createTask")}</button></div>
+                      <div className="all-done">
+                        <CircleCheck size={26} />
+                        <h3>{tasks.length ? t("caughtUp") : t("nothingScheduled")}</h3>
+                        <p>{tasks.length ? t("noRemaining") : t("addToSee")}</p>
+                        <button className="secondary-button" onClick={openNewTask}>
+                          <Plus size={14} /> {t("createTask")}
+                        </button>
+                      </div>
                     )}
                   </article>
-
-                  {activeNav === "Insights" && (
-                    <article className="panel insights-card">
-                      <div className="mini-insight-icon"><BarChart3 size={18} /></div>
-                      <div className="section-kicker">{t("Insights").toUpperCase()}</div>
-                      <h3>{t("progressOver")}</h3>
-                      <p>{completed} / {tasks.length} {t("completedOf")}</p>
-                    </article>
-                  )}
                 </div>
               </section>
             </>
           )}
 
-          <footer className="page-footer"><span>ORDO / MAKE TIME COUNT</span><span>{t("footer")}</span></footer>
+          <footer className="page-footer">
+            <span>ORDO</span>
+            <span>{t("footer")}</span>
+          </footer>
         </div>
       </main>
 
-      {toast && <div className="ordo-toast" role="status"><CircleCheck size={16} />{toast}</div>}
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div className="ordo-toast" role="status">
+          <CircleCheck size={15} />
+          {toast}
+        </div>
+      )}
 
+      {/* Acoustic Alarm & Persona Modal */}
+      {showProfileModal && (
+        <OrdoProfileModal
+          profile={profile}
+          onUpdateProfile={handleProfileUpdate}
+          onClose={() => setShowProfileModal(false)}
+        />
+      )}
+
+      {/* Task Modal */}
       {showForm && (
-        <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) { setShowForm(false); resetForm(); } }}>
+        <div
+          className="modal-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setShowForm(false);
+              resetForm();
+            }
+          }}
+        >
           <form className="task-modal" onSubmit={saveTask}>
             <div className="modal-heading">
-              <div><div className="section-kicker">{editingId ? t("refine") : t("makeHappen")}</div><h2>{editingId ? t("editTask") : t("createTitle")}</h2><p>{editingId ? t("updateDetails") : t("nextStep")}</p></div>
-              <button type="button" className="icon-button" aria-label="Close form" onClick={() => { setShowForm(false); resetForm(); }}><X size={19} /></button>
+              <div>
+                <div className="section-kicker">
+                  {editingId ? t("refine") : t("makeHappen")}
+                </div>
+                <h2>{editingId ? t("editTask") : t("createTitle")}</h2>
+                <p>{editingId ? t("updateDetails") : t("nextStep")}</p>
+              </div>
+              <button
+                type="button"
+                className="icon-button"
+                aria-label="Close form"
+                onClick={() => {
+                  setShowForm(false);
+                  resetForm();
+                }}
+              >
+                <X size={18} />
+              </button>
             </div>
-            <label className="form-label">{t("taskName")}<input autoFocus required maxLength={120} value={title} onChange={(event) => setTitle(event.target.value)} placeholder={t("taskPlaceholder")} /></label>
+            <label className="form-label">
+              {t("taskName")}
+              <input
+                autoFocus
+                required
+                maxLength={120}
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder={t("taskPlaceholder")}
+              />
+            </label>
             <div className="form-row">
-              <label className="form-label">{t("startTime")}<input type="time" required value={time} onChange={(event) => setTime(event.target.value)} /></label>
-              <label className="form-label">{t("duration")}<select value={duration} onChange={(event) => setDuration(event.target.value)}>{DURATIONS.map((minutes) => <option key={minutes} value={minutes}>{minutes} minutes</option>)}</select></label>
+              <label className="form-label">
+                {t("startTime")}
+                <input
+                  type="time"
+                  required
+                  value={time}
+                  onChange={(event) => setTime(event.target.value)}
+                />
+              </label>
+              <label className="form-label">
+                {t("duration")}
+                <select
+                  value={duration}
+                  onChange={(event) => setDuration(event.target.value)}
+                >
+                  {DURATIONS.map((minutes) => (
+                    <option key={minutes} value={minutes}>
+                      {minutes} minutes
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
             <div className="form-row">
-              <label className="form-label">{t("priority")}<select value={priority} onChange={(event) => setPriority(event.target.value)}>{["Low", "Medium", "High"].map((item) => <option key={item} value={item}>{t(item)}</option>)}</select></label>
-              <label className="form-label">{t("category")}<select value={category} onChange={(event) => setCategory(event.target.value)}>{["Study", "Work", "Personal", "Health", "Project", "Other"].map((item) => <option key={item} value={item}>{t(item)}</option>)}</select></label>
+              <label className="form-label">
+                {t("priority")}
+                <select
+                  value={priority}
+                  onChange={(event) => setPriority(event.target.value)}
+                >
+                  {["Low", "Medium", "High"].map((item) => (
+                    <option key={item} value={item}>
+                      {t(item)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="form-label">
+                {t("category")}
+                <select
+                  value={category}
+                  onChange={(event) => setCategory(event.target.value)}
+                >
+                  {["Work", "Study", "Personal", "Health", "Project", "Other"].map(
+                    (item) => (
+                      <option key={item} value={item}>
+                        {t(item)}
+                      </option>
+                    )
+                  )}
+                </select>
+              </label>
             </div>
             <div className="modal-actions">
-              <button type="button" className="secondary-button" onClick={() => { setShowForm(false); resetForm(); }}>{t("cancel")}</button>
-              <button type="submit" className="primary-button">{editingId ? <Check size={17} /> : <Plus size={17} />}{editingId ? t("saveChanges") : t("create")}</button>
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => {
+                  setShowForm(false);
+                  resetForm();
+                }}
+              >
+                {t("cancel")}
+              </button>
+              <button type="submit" className="primary-button">
+                {editingId ? <Check size={16} /> : <Plus size={16} />}
+                {editingId ? t("saveChanges") : t("create")}
+              </button>
             </div>
           </form>
         </div>
@@ -701,5 +1518,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
