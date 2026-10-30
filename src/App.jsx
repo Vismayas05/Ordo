@@ -2,13 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   LayoutDashboard,
   CalendarDays,
-  CheckSquare,
   BarChart3,
   Settings,
   Plus,
   Search,
   Clock3,
-  ArrowUpRight,
   CircleCheck,
   Circle,
   Menu,
@@ -32,111 +30,106 @@ import Insights from "./pages/Insights.jsx";
 import BackgroundCanvas from "./components/BackgroundCanvas.jsx";
 import StressCascadeBanner from "./components/StressCascadeBanner.jsx";
 import OrdoProfileModal from "./components/OrdoProfileModal.jsx";
-import ScheduleCascadeVisualizer from "./components/ScheduleCascadeVisualizer.jsx";
+import OrdoLogo from "./components/OrdoLogo.jsx";
 
 import {
   calculateScheduleCascade,
   applyDominoShift,
-  applyBufferCompression,
 } from "./services/stressEngine.js";
 import {
   getStoredProfile,
-  saveProfile,
 } from "./services/personaConfig.js";
 import {
   startStressAlarmLoop,
   stopStressAlarm,
-  playTonePreview,
 } from "./services/alarmSound.js";
 
 const STORAGE_KEY = "ordo-tasks";
 const SETTINGS_KEY = "ordo-settings";
 
+// 3 clean, essential navigation tabs
 const NAV = [
   { label: "Overview", icon: LayoutDashboard },
-  { label: "Domino Cascade", icon: FastForward },
-  { label: "My schedule", icon: CalendarDays },
-  { label: "My tasks", icon: CheckSquare },
+  { label: "My Schedule", icon: CalendarDays },
   { label: "Insights", icon: BarChart3 },
 ];
 
 const DURATIONS = [15, 30, 45, 60, 90, 120];
 
+// Simple, direct text without long conjunctions or wordy fluff
 const TEXT = {
   en: {
     Overview: "Overview",
-    "Domino Cascade": "Domino Cascade",
-    "My schedule": "My schedule",
-    "My tasks": "My tasks",
+    "My Schedule": "My Schedule",
     Insights: "Insights",
     Settings: "Settings",
-    workspace: "ORDO WORKSPACE",
+    workspace: "WORKSPACE",
     search: "Search tasks...",
-    newTask: "New task",
-    welcome: "Order & Flow, Engineered.",
-    subtitle: "Your personal schedule rhythm. Overdue focus triggers a stress alarm showing downstream ripple impact.",
+    newTask: "New Task",
+    welcome: "Today's Schedule",
+    subtitle: "Tasks and time tracking with alert cues.",
     tasks: "Tasks",
     total: "total",
     remaining: "remaining",
     completed: "Completed",
-    marked: "Tasks marked complete",
-    timeRemaining: "Time remaining",
-    planned: "Planned unfinished time",
-    completion: "Completion",
-    progress: "Your task completion rate",
-    yourPlan: "YOUR DAY FLOW",
-    yourProgress: "YOUR PROGRESS",
-    yourSchedule: "Today's Schedule Chain",
-    allTasks: "All Tasks",
-    upcoming: "Upcoming Cascade",
-    summary: "Progress summary",
-    organised: "Chronological schedule with domino ripple awareness.",
-    unfinished: "Active tasks in timeline order.",
-    taskCompletion: "Flow progress",
-    viewAll: "View all",
-    plannedTime: "Planned task time",
-    highPriority: "High-priority tasks",
-    remainingTasks: "Remaining tasks",
+    marked: "Done",
+    timeRemaining: "Time Left",
+    planned: "Planned",
+    completion: "Progress",
+    progress: "Completion rate",
+    yourPlan: "SCHEDULE",
+    yourProgress: "ANALYTICS",
+    yourSchedule: "Today's Tasks",
+    allTasks: "Schedule",
+    upcoming: "Upcoming",
+    summary: "Summary",
+    organised: "Organized by start time.",
+    unfinished: "Pending tasks.",
+    taskCompletion: "Completion",
+    viewAll: "View All",
+    plannedTime: "Planned time",
+    highPriority: "High priority",
+    remainingTasks: "Remaining",
     noMatches: "No matching tasks",
     nothingUpcoming: "Nothing upcoming",
-    startHere: "Your day starts here",
+    startHere: "No tasks yet",
     searchTip: "Try a different search term.",
-    firstTask: "Add your first task to start your schedule.",
-    createFirst: "Create your first task",
-    addAnother: "Add another task",
+    firstTask: "Add your first task to start planning.",
+    createFirst: "Add Task",
+    addAnother: "Add Task",
     current: "CURRENT TASK",
     inProgress: "IN PROGRESS",
     upNext: "UP NEXT",
-    timeOver: "Over planned time",
-    timeLeft: "Time remaining",
-    untilEnd: "Until planned end",
-    reviewNext: "Review next task",
-    scheduleAlert: "Schedule pressure detected",
-    noAuto: "Ordo lets you decide when to domino shift or trim buffers.",
-    nextComing: "Your next task is coming up. Transition smoothly.",
-    caughtUp: "All caught up!",
-    nothingScheduled: "Nothing scheduled yet",
-    noRemaining: "No unfinished tasks remain.",
-    addToSee: "Add a task to start your day.",
-    createTask: "Create a task",
-    progressOver: "Progress over perfection",
-    completedOf: "tasks completed. Momentum maintained.",
-    footer: "ORDO // DYNAMIC SCHEDULE & ACOUSTIC CASCADE ALARM",
-    refine: "REFINE TASK",
-    makeHappen: "SCHEDULE TASK",
-    editTask: "Edit task",
-    createTitle: "Create a task",
-    updateDetails: "Update the parameters for this task.",
-    nextStep: "Give your next step a planned place in your day.",
-    taskName: "Task name",
-    taskPlaceholder: "What are you working on?",
-    startTime: "Start time",
+    timeOver: "Overdue",
+    timeLeft: "Time Remaining",
+    untilEnd: "Until end",
+    reviewNext: "Next task",
+    scheduleAlert: "Schedule alert",
+    noAuto: "Decide when to shift tasks.",
+    nextComing: "Next task starts soon.",
+    caughtUp: "All tasks done",
+    nothingScheduled: "No tasks scheduled",
+    noRemaining: "No unfinished tasks.",
+    addToSee: "Add a task to start.",
+    createTask: "Create Task",
+    progressOver: "Progress",
+    completedOf: "completed.",
+    footer: "ORDO // ALERT SCHEDULER",
+    refine: "EDIT TASK",
+    makeHappen: "NEW TASK",
+    editTask: "Edit Task",
+    createTitle: "Create Task",
+    updateDetails: "Update task details.",
+    nextStep: "Add task to schedule.",
+    taskName: "Task Name",
+    taskPlaceholder: "What needs to be done?",
+    startTime: "Start Time",
     duration: "Duration",
     priority: "Priority",
     category: "Category",
     cancel: "Cancel",
-    saveChanges: "Save changes",
-    create: "Create task",
+    saveChanges: "Save",
+    create: "Add Task",
     Personal: "Personal",
     Study: "Study",
     Work: "Work",
@@ -151,27 +144,27 @@ const TEXT = {
     delete: "Delete task",
     edit: "Edit task",
     language: "Language",
-    voiceLabel: "Voice Announcements",
+    voiceLabel: "Voice alerts",
     notificationLabel: "Browser notifications",
-    settingsTitle: "Preferences & Acoustics",
-    settingsDescription: "Configure your distinct acoustic alarms, domino tolerances, and language.",
-    voiceOn: "Voice reminders on",
-    voiceOff: "Voice reminders off",
+    settingsTitle: "Preferences",
+    settingsDescription: "Sound, notification, and language preferences.",
+    voiceOn: "Sound on",
+    voiceOff: "Sound muted",
     enableNotifications: "Enable notifications",
-    notificationReady: "Browser notifications enabled.",
-    permissionDenied: "Notifications blocked in browser settings.",
-    unavailable: "Browser notifications unavailable.",
-    startReminder: "Time to begin",
-    endReminder: "Planned time ended for",
+    notificationReady: "Notifications enabled.",
+    permissionDenied: "Notifications blocked.",
+    unavailable: "Notifications unavailable.",
+    startReminder: "Time for",
+    endReminder: "Time ended for",
     taskStarting: "Starting now.",
-    endAlert: "Reached planned end time.",
-    conflictTitle: "Schedule overlap detected",
-    conflictDescription: "Domino shift suggested to eliminate overlap.",
-    moveAfter: "Shift to",
-    keepSchedule: "Keep schedule",
-    moved: "Schedule updated.",
-    noConflicts: "No schedule overlaps detected.",
-    alerts: "Schedule Overlaps",
+    endAlert: "Time ended.",
+    conflictTitle: "Overlap detected",
+    conflictDescription: "Adjust times to avoid overlap.",
+    moveAfter: "Move to",
+    keepSchedule: "Keep",
+    moved: "Rescheduled.",
+    noConflicts: "No overlaps.",
+    alerts: "Overlaps",
     languageHint: "Choose interface language.",
     english: "English",
     malayalam: "മലയാളം",
@@ -179,78 +172,76 @@ const TEXT = {
   },
   ml: {
     Overview: "അവലോകനം",
-    "Domino Cascade": "ഡൊമിനോ കാസ്കേഡ്",
-    "My schedule": "ഷെഡ്യൂൾ",
-    "My tasks": "ടാസ്കുകൾ",
+    "My Schedule": "ഷെഡ്യൂൾ",
     Insights: "വിശകലനം",
     Settings: "ക്രമീകരണങ്ങൾ",
-    workspace: "ഓർഡോ വർക്ക്സ്പേസ്",
-    search: "ടാസ്കുകൾ തിരയുക...",
+    workspace: "വർക്ക്സ്പേസ്",
+    search: "തിരയുക...",
     newTask: "പുതിയ ടാസ്ക്",
-    welcome: "ശ്രദ്ധയും സമയവും കൈവിടാതെ.",
-    subtitle: "നിങ്ങളുടെ വ്യക്തിഗത ഷെഡ്യൂൾ. ഒരു ടാസ്ക് വൈകിയാൽ അടുത്തതിനെ ബാധിക്കുന്ന സമ്മർദ്ദ അലാറം ഓർഡോ നൽകുന്നു.",
+    welcome: "ഇന്നത്തെ ഷെഡ്യൂൾ",
+    subtitle: "ടാസ്കുകളും സമയക്രമവും.",
     tasks: "ടാസ്കുകൾ",
     total: "ആകെ",
     remaining: "ബാക്കി",
-    completed: "പൂർത്തിയാക്കി",
-    marked: "പൂർത്തിയാക്കിയവ",
-    timeRemaining: "ബാക്കിയുള്ള സമയം",
-    planned: "ബാക്കിയുള്ള ആസൂത്രിത സമയം",
-    completion: "പൂർത്തീകരണം",
-    progress: "ടാസ്ക് പുരോഗതി",
-    yourPlan: "ഇന്നത്തെ ഫ്ലോ",
-    yourProgress: "നിങ്ങളുടെ പുരോഗതി",
-    yourSchedule: "ഷെഡ്യൂൾ ടൈംലൈൻ",
-    allTasks: "എല്ലാ ടാസ്കുകളും",
+    completed: "പൂർത്തിയായി",
+    marked: "പൂർത്തിയായവ",
+    timeRemaining: "ബാക്കി സമയം",
+    planned: "ആസൂത്രണം",
+    completion: "പുരോഗതി",
+    progress: "നിരക്ക്",
+    yourPlan: "ഷെഡ്യൂൾ",
+    yourProgress: "വിശകലനം",
+    yourSchedule: "ഇന്നത്തെ ടാസ്കുകൾ",
+    allTasks: "എല്ലാം",
     upcoming: "വരാനിരിക്കുന്നവ",
-    summary: "പുരോഗതി സംഗ്രഹം",
-    organised: "സമയക്രമത്തിലുള്ള ഷെഡ്യൂൾ.",
-    unfinished: "പൂർത്തിയാക്കാനുള്ള ടാസ്കുകൾ.",
-    taskCompletion: "പൂർത്തീകരണ നിരക്ക്",
+    summary: "സംഗ്രഹം",
+    organised: "സമയക്രമം.",
+    unfinished: "ബാക്കിയുള്ളവ.",
+    taskCompletion: "പൂർത്തീകരണം",
     viewAll: "എല്ലാം കാണുക",
     plannedTime: "ആസൂത്രിത സമയം",
-    highPriority: "ഉയർന്ന മുൻഗണനയുള്ളവ",
-    remainingTasks: "ബാക്കിയുള്ളവ",
+    highPriority: "ഉയർന്ന മുൻഗണന",
+    remainingTasks: "ബാക്കി",
     noMatches: "കണ്ടെത്തിയില്ല",
-    nothingUpcoming: "വരാനിരിക്കുന്നവയില്ല",
-    startHere: "ഇവിടെ തുടങ്ങാം",
-    searchTip: "മറ്റൊരു വാക്ക് ഉപയോഗിക്കൂ.",
+    nothingUpcoming: "ടാസ്കുകളില്ല",
+    startHere: "തുടങ്ങാം",
+    searchTip: "മറ്റൊരു വാക്ക് നൽകൂ.",
     firstTask: "ആദ്യ ടാസ്ക് ചേർക്കൂ.",
-    createFirst: "ആദ്യ ടാസ്ക് സൃഷ്ടിക്കുക",
-    addAnother: "മറ്റൊരു ടാസ്ക് ചേർക്കുക",
+    createFirst: "ടാസ്ക് ചേർക്കുക",
+    addAnother: "ടാസ്ക് ചേർക്കുക",
     current: "നിലവിലെ ടാസ്ക്",
     inProgress: "പുരോഗമിക്കുന്നു",
     upNext: "അടുത്തത്",
     timeOver: "സമയം കഴിഞ്ഞു",
-    timeLeft: "ബാക്കിയുള്ള സമയം",
-    untilEnd: "തീരാൻ ബാക്കി",
-    reviewNext: "അടുത്ത ടാസ്ക് കാണുക",
-    scheduleAlert: "ഷെഡ്യൂൾ സമ്മർദ്ദം കണ്ടെത്തി",
-    noAuto: "ഓർഡോ സ്വയം മാറ്റില്ല, നിങ്ങൾക്ക് അനുയോജ്യമായ മാറ്റം വരുത്താം.",
-    nextComing: "അടുത്ത ടാസ്ക് ഉടൻ ആരംഭിക്കും.",
-    caughtUp: "എല്ലാം പൂർത്തിയായി!",
-    nothingScheduled: "ഒന്നും ഷെഡ്യൂൾ ചെയ്തിട്ടില്ല",
-    noRemaining: "പൂർത്തിയാക്കാനുള്ള ടാസ്കുകളില്ല.",
-    addToSee: "തുടങ്ങാൻ ഒരു ടാസ്ക് ചേർക്കൂ.",
+    timeLeft: "ബാക്കി സമയം",
+    untilEnd: "അവസാനിക്കാൻ",
+    reviewNext: "അടുത്ത ടാസ്ക്",
+    scheduleAlert: "ഷെഡ്യൂൾ അലർട്ട്",
+    noAuto: "മാറ്റങ്ങൾ നിങ്ങൾ തീരുമാനിക്കൂ.",
+    nextComing: "അടുത്ത ടാസ്ക് ഉടൻ തുടങ്ങും.",
+    caughtUp: "എല്ലാം കഴിഞ്ഞു!",
+    nothingScheduled: "ടാസ്കുകളൊന്നുമില്ല",
+    noRemaining: "ബാക്കി ടാസ്കുകളില്ല.",
+    addToSee: "ടാസ്ക് ചേർക്കൂ.",
     createTask: "ടാസ്ക് ഉണ്ടാക്കുക",
-    progressOver: "പൂർണ്ണതയേക്കാൾ പുരോഗതി",
-    completedOf: "ടാസ്കുകൾ പൂർത്തിയായി.",
-    footer: "ORDO // DYNAMIC SCHEDULE & ACOUSTIC CASCADE ALARM",
+    progressOver: "പുരോഗതി",
+    completedOf: "പൂർത്തിയായി.",
+    footer: "ORDO // ALERT SCHEDULER",
     refine: "തിരുത്തുക",
-    makeHappen: "തുടങ്ങാം",
+    makeHappen: "പുതിയത്",
     editTask: "ടാസ്ക് തിരുത്തുക",
-    createTitle: "ടാസ്ക് സൃഷ്ടിക്കുക",
-    updateDetails: "വിവരങ്ങൾ പുതുക്കുക.",
-    nextStep: "അടുത്ത ഘട്ടത്തിന് സമയം നൽകൂ.",
-    taskName: "ടാസ്കിന്റെ പേര്",
+    createTitle: "ടാസ്ക് ഉണ്ടാക്കുക",
+    updateDetails: "വിവരങ്ങൾ നൽകൂ.",
+    nextStep: "ഷെഡ്യൂളിൽ ചേർക്കൂ.",
+    taskName: "പേര്",
     taskPlaceholder: "എന്താണ് ചെയ്യേണ്ടത്?",
-    startTime: "ആരംഭ സമയം",
+    startTime: "സമയം",
     duration: "ദൈർഘ്യം",
     priority: "മുൻഗണന",
     category: "വിഭാഗം",
     cancel: "റദ്ദാക്കുക",
-    saveChanges: "മാറ്റങ്ങൾ സൂക്ഷിക്കുക",
-    create: "സൃഷ്ടിക്കുക",
+    saveChanges: "സൂക്ഷിക്കുക",
+    create: "ചേർക്കുക",
     Personal: "വ്യക്തിപരം",
     Study: "പഠനം",
     Work: "ജോലി",
@@ -265,27 +256,27 @@ const TEXT = {
     delete: "നീക്കം ചെയ്യുക",
     edit: "തിരുത്തുക",
     language: "ഭാഷ",
-    voiceLabel: "ശബ്ദ ഓർമ്മപ്പെടുത്തലുകൾ",
+    voiceLabel: "ശബ്ദ അലർട്ടുകൾ",
     notificationLabel: "അറിയിപ്പുകൾ",
-    settingsTitle: "മുൻഗണനകളും അലാറവും",
-    settingsDescription: "നിങ്ങളുടെ ശബ്ദ അലാറവും കാസ്കേഡ് സമയവും ക്രമീകരിക്കൂ.",
+    settingsTitle: "ക്രമീകരണങ്ങൾ",
+    settingsDescription: "ശബ്ദം, അറിയിപ്പുകൾ, ഭാഷ എന്നിവ തിരഞ്ഞെടുക്കൂ.",
     voiceOn: "ശബ്ദം ഓൺ",
     voiceOff: "ശബ്ദം ഓഫ്",
     enableNotifications: "അറിയിപ്പുകൾ നൽകുക",
     notificationReady: "അറിയിപ്പുകൾ സജ്ജമാണ്.",
-    permissionDenied: "ബ്രൗസറിൽ അറിയിപ്പുകൾ അനുവദിക്കണം.",
+    permissionDenied: "അനുമതി നൽകണം.",
     unavailable: "ലഭ്യമല്ല.",
     startReminder: "തുടങ്ങാൻ സമയം",
     endReminder: "സമയം അവസാനിച്ചു",
     taskStarting: "ഇപ്പോൾ തുടങ്ങുന്നു.",
-    endAlert: "സമയം പൂർത്തിയായി.",
+    endAlert: "സമയം കഴിഞ്ഞു.",
     conflictTitle: "സമയങ്ങൾ തമ്മിൽ മുട്ടുന്നു",
-    conflictDescription: "നിർദ്ദേശിച്ച സമയത്തേക്ക് മാറ്റാം.",
+    conflictDescription: "സമയങ്ങൾ മാറ്റാം.",
     moveAfter: "മാറ്റുക",
     keepSchedule: "നിലനിർത്തുക",
-    moved: "ഷെഡ്യൂൾ പുതുക്കി.",
-    noConflicts: "സമയങ്ങൾ തമ്മിൽ മുട്ടുന്നില്ല.",
-    alerts: "ഷെഡ്യൂൾ പരിശോധന",
+    moved: "മാറ്റി.",
+    noConflicts: "മുട്ടുന്നില്ല.",
+    alerts: "പരിശോധന",
     languageHint: "ഭാഷ തിരഞ്ഞെടുക്കൂ.",
     english: "English",
     malayalam: "മലയാളം",
@@ -399,6 +390,7 @@ export default function App() {
   const [showForm, setShowForm] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [search, setSearch] = useState("");
+  const [filterMode, setFilterMode] = useState("all"); // all, pending, done
   const [editingId, setEditingId] = useState(null);
   const [title, setTitle] = useState("");
   const [time, setTime] = useState(getDefaultTime);
@@ -438,12 +430,12 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  // Calculate schedule cascade & stress index in real-time
+  // Real-time schedule cascade & stress calculation
   const cascadeInfo = useMemo(() => {
     return calculateScheduleCascade(tasks, now, profile);
   }, [tasks, now, profile]);
 
-  // Trigger procedural stress audio alarm loop when stress escalates
+  // Play procedural stress alarm when a task overruns
   useEffect(() => {
     const isOverdue = Boolean(cascadeInfo.overdueTask);
     const isStressAlarm = cascadeInfo.stressState === "stress-alarm" || cascadeInfo.stressState === "critical";
@@ -486,7 +478,7 @@ export default function App() {
     profile,
   ]);
 
-  // Task-time announcements
+  // Task-time voice announcements
   useEffect(() => {
     const checkReminders = () => {
       const current = Date.now();
@@ -514,26 +506,6 @@ export default function App() {
               : `${task.title}. ${t("endAlert")}`;
 
           if (settings.voice) speak(message, language);
-
-          if (
-            settings.notifications &&
-            "Notification" in window &&
-            Notification.permission === "granted"
-          ) {
-            try {
-              new Notification(
-                event.kind === "start"
-                  ? `${t("startReminder")} ${task.title}`
-                  : `${t("endReminder")} ${task.title}`,
-                {
-                  body: event.kind === "start" ? t("taskStarting") : t("endAlert"),
-                  icon: "/ordo-logo.png",
-                }
-              );
-            } catch {
-              // Notification fallback
-            }
-          }
         });
       });
     };
@@ -541,7 +513,7 @@ export default function App() {
     checkReminders();
     const timer = window.setInterval(checkReminders, 1000);
     return () => window.clearInterval(timer);
-  }, [tasks, settings.voice, settings.notifications, language, t]);
+  }, [tasks, settings.voice, language, t]);
 
   const sortedTasks = useMemo(
     () => [...tasks].sort((a, b) => a.time.localeCompare(b.time) || a.title.localeCompare(b.title)),
@@ -554,10 +526,11 @@ export default function App() {
       const match =
         task.title.toLowerCase().includes(query) || task.category.toLowerCase().includes(query);
       if (!match) return false;
-      if (activeNav === "My schedule") return !task.done;
+      if (filterMode === "pending") return !task.done;
+      if (filterMode === "done") return task.done;
       return true;
     });
-  }, [sortedTasks, search, activeNav]);
+  }, [sortedTasks, search, filterMode]);
 
   const completed = tasks.filter((task) => task.done).length;
   const pending = tasks.length - completed;
@@ -565,7 +538,6 @@ export default function App() {
   const totalMinutes = tasks
     .filter((task) => !task.done)
     .reduce((sum, task) => sum + Number(task.duration || 0), 0);
-  const allMinutes = tasks.reduce((sum, task) => sum + Number(task.duration || 0), 0);
 
   const currentTask = cascadeInfo.inProgressTask;
   const nextTask = useMemo(
@@ -593,7 +565,7 @@ export default function App() {
 
   function handleProfileUpdate(updatedProfile) {
     setProfile(updatedProfile);
-    setToast(language === "ml" ? "പ്രൊഫൈലും അലാറവും പുതുക്കി." : "Ordo profile and acoustic alarm updated!");
+    setToast(language === "ml" ? "അലാറം പുതുക്കി." : "Alarm profile updated.");
   }
 
   function toggleTask(id) {
@@ -629,9 +601,11 @@ export default function App() {
   }
 
   function clearAllTasks() {
-    setTasks([]);
-    stopStressAlarm();
-    setToast(language === "ml" ? "എല്ലാ ടാസ്കുകളും നീക്കം ചെയ്തു." : "All tasks cleared. Ready for your fresh schedule.");
+    if (window.confirm("Clear all tasks and start fresh?")) {
+      setTasks([]);
+      stopStressAlarm();
+      setToast(language === "ml" ? "എല്ലാം നീക്കം ചെയ്തു." : "All tasks cleared.");
+    }
   }
 
   function loadSampleTemplate() {
@@ -654,7 +628,7 @@ export default function App() {
       },
       {
         id: `sample-2-${Date.now()}`,
-        title: "Project Review & Feedback",
+        title: "Project Review",
         time: t2,
         duration: 30,
         priority: "Medium",
@@ -664,7 +638,7 @@ export default function App() {
       },
       {
         id: `sample-3-${Date.now()}`,
-        title: "Day Wrap-up & Planning",
+        title: "Wrap-up & Planning",
         time: t3,
         duration: 30,
         priority: "Low",
@@ -674,7 +648,7 @@ export default function App() {
       },
     ];
     setTasks(sample);
-    setToast(language === "ml" ? "സാമ്പിൾ ടാസ്കുകൾ ചേർത്തു." : "Sample routine loaded for testing.");
+    setToast(language === "ml" ? "സാമ്പിൾ ടാസ്കുകൾ ചേർത്തു." : "Sample routine loaded.");
   }
 
   function saveTask(event) {
@@ -703,7 +677,7 @@ export default function App() {
           createdAt: Date.now(),
         },
       ]);
-      setToast(language === "ml" ? "പുതിയ ടാസ്ക് ചേർത്തു." : "Task added to your schedule.");
+      setToast(language === "ml" ? "ടാസ്ക് ചേർത്തു." : "Task added.");
     }
 
     setShowForm(false);
@@ -716,10 +690,9 @@ export default function App() {
     setSearch("");
   }
 
-  // Quick Action Domino Resolvers
-  function handleDominoShift(targetId, extraMin) {
-    const shiftMin = extraMin || cascadeInfo.overrunMinutes || 15;
-    const targetTaskId = targetId || cascadeInfo.overdueTask?.id;
+  function handleDominoShift() {
+    const shiftMin = cascadeInfo.overrunMinutes || 15;
+    const targetTaskId = cascadeInfo.overdueTask?.id;
     if (!targetTaskId) return;
 
     const updated = applyDominoShift(tasks, targetTaskId, shiftMin);
@@ -727,23 +700,8 @@ export default function App() {
     stopStressAlarm();
     setToast(
       language === "ml"
-        ? `ഷെഡ്യൂൾ +${shiftMin} മിനിറ്റ് മുന്നോട്ട് ക്രമീകരിച്ചു.`
-        : `Domino shift applied: upcoming tasks moved +${shiftMin}m forward.`
-    );
-  }
-
-  function handleCompressBuffers(targetId, extraMin) {
-    const recoverMin = extraMin || cascadeInfo.overrunMinutes || 15;
-    const targetTaskId = targetId || cascadeInfo.overdueTask?.id;
-    if (!targetTaskId) return;
-
-    const updated = applyBufferCompression(tasks, targetTaskId, recoverMin);
-    setTasks(updated);
-    stopStressAlarm();
-    setToast(
-      language === "ml"
-        ? `ബഫർ സമയം ക്രമീകരിച്ച് മാറ്റിവെച്ചു.`
-        : `Slack buffers compressed by ${recoverMin}m to protect your day's finish line.`
+        ? `ഷെഡ്യൂൾ +${shiftMin} മിനിറ്റ് മാറ്റി.`
+        : `Schedule auto-shifted by +${shiftMin}m.`
     );
   }
 
@@ -752,21 +710,13 @@ export default function App() {
     const overdueId = cascadeInfo.overdueTask.id;
     setTasks((old) => old.map((t) => (t.id === overdueId ? { ...t, done: true } : t)));
     stopStressAlarm();
-    setToast(
-      language === "ml"
-        ? "ടാസ്ക് പൂർത്തിയാക്കി അടുത്തതിലേക്ക് മുന്നേറി!"
-        : "Task completed! Advanced to next priority."
-    );
+    setToast(language === "ml" ? "ടാസ്ക് പൂർത്തിയായി!" : "Task completed!");
   }
 
   function handleSnooze() {
     setSnoozeUntil(Date.now() + 5 * 60000);
     stopStressAlarm();
-    setToast(
-      language === "ml"
-        ? "5 മിനിറ്റത്തേക്ക് സ്നൂസ് ചെയ്തു."
-        : "Stress alarm snoozed for 5 minutes."
-    );
+    setToast(language === "ml" ? "5 മിനിറ്റ് സ്നൂസ് ചെയ്തു." : "Snoozed for 5 minutes.");
   }
 
   function handleToggleMute() {
@@ -774,15 +724,6 @@ export default function App() {
       stopStressAlarm();
     }
     setIsAudioMuted(!isAudioMuted);
-  }
-
-  function testUserSound() {
-    playTonePreview({
-      baseFreq: profile.soundFreq,
-      wave: profile.soundWave,
-      type: profile.soundType,
-    });
-    setToast(`Playing acoustic tone: ${profile.soundFreq} Hz (${profile.soundWave})`);
   }
 
   async function enableNotifications() {
@@ -803,19 +744,15 @@ export default function App() {
   const heading =
     activeNav === "Overview"
       ? t("welcome")
-      : activeNav === "Domino Cascade"
-      ? "Domino Cascade Simulator"
-      : activeNav === "My schedule"
-      ? t("upcoming")
-      : activeNav === "My tasks"
-      ? t("allTasks")
+      : activeNav === "My Schedule"
+      ? "My Schedule"
       : activeNav === "Insights"
-      ? t("yourProgress")
+      ? "Insights"
       : t("settingsTitle");
 
   return (
     <div className={`app-shell ${language === "ml" ? "language-ml" : ""}`}>
-      {/* Dynamic Animated Jet Black Background Canvas with Cerulean & Neon Rose nodes */}
+      {/* Background canvas */}
       <BackgroundCanvas
         stressScore={cascadeInfo.stressScore}
         stressState={cascadeInfo.stressState}
@@ -832,10 +769,7 @@ export default function App() {
       {/* Sidebar */}
       <aside className={`sidebar ${mobileMenu ? "sidebar-open" : ""}`}>
         <div className="brand">
-          <div className="brand-logo-wrap">
-            <img src="/ordo-logo.png" alt="Ordo" className="brand-logo" />
-            <span className="brand-badge">PRO</span>
-          </div>
+          <OrdoLogo />
           <button
             className="icon-button mobile-close"
             aria-label="Close navigation"
@@ -855,32 +789,13 @@ export default function App() {
             >
               <Icon size={18} strokeWidth={1.8} />
               <span>{t(label)}</span>
-              {label === "My tasks" && <span className="nav-count">{tasks.length}</span>}
-              {label === "Domino Cascade" && cascadeInfo.overdueTask && (
-                <span className="nav-count" style={{ background: "rgba(255,0,127,0.2)", color: "#ff007f", borderColor: "rgba(255,0,127,0.4)" }}>
-                  +{cascadeInfo.overrunMinutes}m
-                </span>
-              )}
+              {label === "My Schedule" && <span className="nav-count">{tasks.length}</span>}
             </button>
           ))}
         </nav>
 
-        {/* Sidebar bottom: personalized Ordo profile preview & settings */}
+        {/* Sidebar bottom: only Settings */}
         <div className="sidebar-bottom">
-          <div
-            className="sidebar-profile-card"
-            onClick={() => setShowProfileModal(true)}
-            title="Click to customize your unique acoustic alarm and persona"
-          >
-            <div className="profile-card-top">
-              <strong>{profile.customName || profile.title || "My Ordo"}</strong>
-              <span className="profile-fingerprint-pill">{profile.uniqueId || "ORDO-7492"}</span>
-            </div>
-            <p className="profile-card-desc">
-              {profile.soundFreq} Hz · {profile.soundType} · {profile.delayToleranceMin}m cushion
-            </p>
-          </div>
-
           <button
             className={`nav-item ${activeNav === "Settings" ? "nav-active" : ""}`}
             onClick={() => selectNav("Settings")}
@@ -899,7 +814,7 @@ export default function App() {
             aria-label="Open navigation"
             onClick={() => setMobileMenu(true)}
           >
-            <Menu size={21} />
+            <Menu size={20} />
           </button>
 
           <div className="breadcrumb">
@@ -907,7 +822,7 @@ export default function App() {
           </div>
 
           <div className="topbar-actions">
-            {/* Live Stress Meter Pill */}
+            {/* Live Stress Status Pill */}
             <div
               className={`top-stress-pill ${
                 cascadeInfo.stressScore >= 75
@@ -916,49 +831,37 @@ export default function App() {
                   ? "stress-pill-warning"
                   : "stress-pill-calm"
               }`}
-              title="Live Stress Level based on task overruns and downstream impact"
             >
               <span>●</span>
               <span>
                 {cascadeInfo.stressScore >= 75
-                  ? `STRESS: ${cascadeInfo.stressScore}% CRITICAL`
+                  ? `STRESS: ${cascadeInfo.stressScore}%`
                   : cascadeInfo.stressScore >= 35
-                  ? `STRESS: ${cascadeInfo.stressScore}% SQUEEZE`
-                  : `FLOW: ${cascadeInfo.stressScore}% OPTIMAL`}
+                  ? `PRESSURE: ${cascadeInfo.stressScore}%`
+                  : `FLOW: ${cascadeInfo.stressScore}%`}
               </span>
             </div>
 
-            {/* Persona Quick Button */}
+            {/* Persona Customizer Pill */}
             <button
               className="persona-top-badge"
               onClick={() => setShowProfileModal(true)}
-              title="Tune your unique alarm sound and delay tolerance"
+              title="Customize alarm tone and cushion"
             >
-              <Zap size={14} />
+              <Zap size={13} />
               <span>{profile.customName || "My Ordo"}</span>
               <strong>{profile.soundFreq}Hz</strong>
             </button>
 
-            {/* Test Alarm Sound */}
-            <button
-              className="icon-button"
-              title="Listen to my unique acoustic alarm"
-              aria-label="Test alarm sound"
-              onClick={testUserSound}
-            >
-              <Volume2 size={18} />
-            </button>
-
             {/* Search Box */}
             <label className="search-box">
-              <Search size={16} />
+              <Search size={15} />
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder={t("search")}
                 aria-label={t("search")}
               />
-              <kbd>⌕</kbd>
             </label>
 
             {/* Language Switch */}
@@ -968,37 +871,43 @@ export default function App() {
               aria-label={t("language")}
               onClick={() => setPreference("language", language === "en" ? "ml" : "en")}
             >
-              <Languages size={18} />
+              <Languages size={17} />
             </button>
 
-            {/* Voice toggle */}
+            {/* Single Mute/Sound Toggle */}
             <button
               className="icon-button"
-              title={settings.voice ? t("voiceOn") : t("voiceOff")}
-              aria-label={settings.voice ? t("voiceOff") : t("voiceOn")}
-              onClick={() => setPreference("voice", !settings.voice)}
+              title={settings.voice && !isAudioMuted ? "Mute sound" : "Enable sound"}
+              aria-label={settings.voice && !isAudioMuted ? "Mute sound" : "Enable sound"}
+              onClick={() => {
+                if (settings.voice && !isAudioMuted) {
+                  setIsAudioMuted(true);
+                  stopStressAlarm();
+                } else {
+                  setIsAudioMuted(false);
+                  setPreference("voice", true);
+                }
+              }}
             >
-              {settings.voice ? <Volume2 size={18} /> : <VolumeX size={18} />}
+              {settings.voice && !isAudioMuted ? <Volume2 size={17} /> : <VolumeX size={17} />}
             </button>
           </div>
         </header>
 
         <div className="page-content">
-          {/* Stress Alarm HUD Banner (when a task is overdue or stress is elevated) */}
-          {cascadeInfo.overdueTask && activeNav === "Overview" && (
+          {/* Stress Alarm HUD Banner (triggers when a task runs late) */}
+          {cascadeInfo.overdueTask && (
             <StressCascadeBanner
               cascadeInfo={cascadeInfo}
-              onDominoShift={() => handleDominoShift()}
-              onCompressBuffers={() => handleCompressBuffers()}
+              onDominoShift={handleDominoShift}
               onMarkDoneAndAdvance={handleMarkDoneAndAdvance}
               onSnooze={handleSnooze}
-              isMuted={isAudioMuted}
+              isMuted={isAudioMuted || !settings.voice}
               onToggleMute={handleToggleMute}
-              language={language}
             />
           )}
 
-          {activeNav !== "Insights" && activeNav !== "Domino Cascade" && (
+          {activeNav !== "Insights" && (
             <section className="welcome-row">
               <div>
                 <div className="eyebrow">
@@ -1012,41 +921,29 @@ export default function App() {
               </div>
               {activeNav !== "Settings" && (
                 <button className="primary-button" onClick={openNewTask}>
-                  <Plus size={18} /> {t("newTask")}
+                  <Plus size={17} /> {t("newTask")}
                 </button>
               )}
             </section>
           )}
 
-          {/* DEDICATED DOMINO CASCADE SIMULATOR VIEW */}
-          {activeNav === "Domino Cascade" ? (
-            <ScheduleCascadeVisualizer
-              tasks={tasks}
-              now={now}
-              cascadeInfo={cascadeInfo}
-              onDominoShift={handleDominoShift}
-              onCompressBuffers={handleCompressBuffers}
-              onOpenNewTask={openNewTask}
-              language={language}
-            />
-          ) : activeNav === "Settings" ? (
+          {activeNav === "Settings" ? (
             /* SETTINGS VIEW */
             <section className="panel settings-panel">
               <div className="section-kicker">{t("Settings").toUpperCase()}</div>
               <h2>{t("settingsTitle")}</h2>
               <p>{t("settingsDescription")}</p>
 
-              {/* Persona Acoustic Profile Trigger */}
               <div className="settings-option">
                 <div>
-                  <strong>Personalized Ordo Signature</strong>
-                  <span>Every user has a different sound frequency and delay tolerance.</span>
+                  <strong>Acoustic Alarm & Cushion</strong>
+                  <span>Set your frequency, sound pattern, and grace period.</span>
                 </div>
                 <button
                   className="secondary-button"
                   onClick={() => setShowProfileModal(true)}
                 >
-                  <Sliders size={16} /> Customize Acoustic Signature
+                  <Sliders size={15} /> Customize Alarm
                 </button>
               </div>
 
@@ -1073,7 +970,7 @@ export default function App() {
 
               <div className="settings-option">
                 <div>
-                  <strong>{t("voiceLabel")} & Stress Audio Alarms</strong>
+                  <strong>Sound Alerts</strong>
                   <span>{settings.voice ? t("voiceOn") : t("voiceOff")}</span>
                 </div>
                 <button
@@ -1108,7 +1005,7 @@ export default function App() {
               <div className="settings-option">
                 <div>
                   <strong>Clear All Tasks</strong>
-                  <span>Reset your schedule and remove all current tasks to start fresh.</span>
+                  <span>Remove all tasks and reset schedule.</span>
                 </div>
                 <button
                   className="secondary-button"
@@ -1129,7 +1026,7 @@ export default function App() {
                   return (
                     <div className="conflict-alert" key={`${first.id}-${second.id}`}>
                       <div className="conflict-icon">
-                        <AlertTriangle size={20} />
+                        <AlertTriangle size={19} />
                       </div>
                       <div className="conflict-copy">
                         <strong>{t("conflictTitle")}</strong>
@@ -1137,7 +1034,6 @@ export default function App() {
                           {first.title} · {timeLabel(first.time, language)} — {second.title} ·{" "}
                           {timeLabel(second.time, language)}
                         </p>
-                        <span>{t("conflictDescription")}</span>
                         <div className="conflict-actions">
                           <button
                             className="secondary-button"
@@ -1164,7 +1060,7 @@ export default function App() {
                 })
               ) : (
                 <div className="no-conflicts">
-                  <CircleCheck size={18} />
+                  <CircleCheck size={17} />
                   <span>{t("noConflicts")}</span>
                 </div>
               )}
@@ -1173,14 +1069,14 @@ export default function App() {
             /* INSIGHTS VIEW */
             <Insights tasks={tasks} language={language} />
           ) : (
-            /* OVERVIEW / MY SCHEDULE / MY TASKS VIEW */
+            /* OVERVIEW & MY SCHEDULE VIEW */
             <>
               <section className="stats-grid">
                 <article className="stat-card">
                   <div className="stat-top">
                     <span>{t("tasks")}</span>
                     <span className="stat-icon">
-                      <CheckSquare size={18} />
+                      <CalendarDays size={17} />
                     </span>
                   </div>
                   <div className="stat-number">
@@ -1194,7 +1090,7 @@ export default function App() {
                   <div className="stat-top">
                     <span>{t("completed")}</span>
                     <span className="stat-icon rose-icon">
-                      <CircleCheck size={18} />
+                      <CircleCheck size={17} />
                     </span>
                   </div>
                   <div className="stat-number">
@@ -1208,7 +1104,7 @@ export default function App() {
                   <div className="stat-top">
                     <span>{t("timeRemaining")}</span>
                     <span className="stat-icon">
-                      <Clock3 size={18} />
+                      <Clock3 size={17} />
                     </span>
                   </div>
                   <div className="stat-number">
@@ -1222,9 +1118,9 @@ export default function App() {
 
                 <article className="stat-card">
                   <div className="stat-top">
-                    <span>STRESS PRESSURE</span>
+                    <span>STRESS LEVEL</span>
                     <span className="stat-icon rose-icon">
-                      <ShieldAlert size={18} />
+                      <ShieldAlert size={17} />
                     </span>
                   </div>
                   <div className="stat-number">
@@ -1232,7 +1128,7 @@ export default function App() {
                     <span className="stat-unit">%</span>
                   </div>
                   <div className="stat-foot">
-                    {cascadeInfo.overdueTask ? `+${cascadeInfo.overrunMinutes}m Overrun` : "Timeline Optimal"}
+                    {cascadeInfo.overdueTask ? `+${cascadeInfo.overrunMinutes}m Overrun` : "Optimal"}
                   </div>
                 </article>
               </section>
@@ -1242,57 +1138,62 @@ export default function App() {
                   className="panel"
                   style={{
                     marginBottom: "20px",
-                    background: "linear-gradient(135deg, rgba(0, 194, 255, 0.12) 0%, rgba(255, 0, 127, 0.08) 100%)",
+                    background: "linear-gradient(135deg, rgba(0, 194, 255, 0.1) 0%, rgba(255, 0, 127, 0.06) 100%)",
                     border: "1px solid var(--border-cerulean)",
-                    padding: "24px 28px",
+                    padding: "22px 24px",
                   }}
                 >
-                  <div className="section-kicker">GET STARTED WITH ORDO</div>
-                  <h2 style={{ fontSize: "22px", margin: "8px 0 6px", color: "#fff" }}>
-                    Your Schedule Is Ready To Plan
+                  <div className="section-kicker">GET STARTED</div>
+                  <h2 style={{ fontSize: "20px", margin: "6px 0", color: "#fff" }}>
+                    No Tasks Yet
                   </h2>
                   <p
                     style={{
                       color: "var(--text-muted)",
-                      fontSize: "13px",
-                      lineHeight: "1.6",
-                      maxWidth: "620px",
-                      margin: "0 0 18px",
+                      fontSize: "12px",
+                      margin: "0 0 16px",
+                      maxWidth: "520px",
                     }}
                   >
-                    Add your focus blocks for today. If you get caught up or run late on a task, Ordo’s acoustic stress alarm triggers and calculates how your delay cascades into your upcoming tasks.
+                    Add tasks to organize your day. If a task takes longer than planned, Ordo rings an alert.
                   </p>
                   <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
                     <button className="primary-button" onClick={openNewTask}>
-                      <Plus size={16} /> Create Your First Task
+                      <Plus size={16} /> Add Task
                     </button>
                     <button className="secondary-button" onClick={loadSampleTemplate}>
-                      <Sparkles size={16} /> Load Demo Routine (Optional)
+                      <Sparkles size={15} /> Load Sample
                     </button>
                   </div>
                 </div>
               )}
 
               <section className="content-grid">
-                {/* Main Schedule / Task Table Panel */}
+                {/* Main Schedule Panel */}
                 <article className="panel schedule-panel">
                   <div className="panel-heading">
                     <div>
                       <div className="section-kicker">
-                        {activeNav === "Insights" ? t("yourProgress") : t("yourPlan")}
+                        {activeNav === "My Schedule" ? "FULL TIMELINE" : t("yourPlan")}
                       </div>
-                      <h2>
-                        {activeNav === "My tasks"
-                          ? t("allTasks")
-                          : activeNav === "My schedule"
-                          ? t("upcoming")
-                          : t("yourSchedule")}
-                      </h2>
-                      <p>{activeNav === "My schedule" ? t("unfinished") : t("organised")}</p>
+                      <h2>{activeNav === "My Schedule" ? "All Tasks" : t("yourSchedule")}</h2>
                     </div>
-                    <button className="text-button" onClick={() => selectNav("Domino Cascade")}>
-                      Domino Simulator <ArrowUpRight size={15} />
-                    </button>
+
+                    {/* Filter Pills */}
+                    {activeNav === "My Schedule" && (
+                      <div style={{ display: "flex", gap: "6px" }}>
+                        {["all", "pending", "done"].map((mode) => (
+                          <button
+                            key={mode}
+                            className={`secondary-button ${filterMode === mode ? "setting-selected" : ""}`}
+                            style={{ minHeight: "30px", padding: "0 10px", fontSize: "11px", textTransform: "capitalize" }}
+                            onClick={() => setFilterMode(mode)}
+                          >
+                            {mode}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div className="progress-section">
@@ -1308,14 +1209,8 @@ export default function App() {
                   <div className="task-list">
                     {visibleTasks.length === 0 ? (
                       <div className="empty-state">
-                        <CalendarDays size={28} />
-                        <strong>
-                          {search
-                            ? t("noMatches")
-                            : activeNav === "My schedule"
-                            ? t("nothingUpcoming")
-                            : t("startHere")}
-                        </strong>
+                        <CalendarDays size={26} />
+                        <strong>{search ? t("noMatches") : t("startHere")}</strong>
                         <span>{search ? t("searchTip") : t("firstTask")}</span>
                         {!search && (
                           <button className="secondary-button" onClick={openNewTask}>
@@ -1338,7 +1233,7 @@ export default function App() {
                               aria-label={task.done ? t("markIncomplete") : t("markComplete")}
                               onClick={() => toggleTask(task.id)}
                             >
-                              {task.done ? <CircleCheck size={21} /> : <Circle size={21} />}
+                              {task.done ? <CircleCheck size={20} /> : <Circle size={20} />}
                             </button>
                             <div className="task-main">
                               <div className="task-title">{task.title}</div>
@@ -1368,7 +1263,7 @@ export default function App() {
                               title={t("edit")}
                               onClick={() => openEditTask(task)}
                             >
-                              <Pencil size={14} />
+                              <Pencil size={13} />
                             </button>
                             <button
                               className="icon-button task-delete"
@@ -1376,7 +1271,7 @@ export default function App() {
                               title={t("delete")}
                               onClick={() => deleteTask(task.id)}
                             >
-                              <Trash2 size={15} />
+                              <Trash2 size={14} />
                             </button>
                           </div>
                         );
@@ -1385,17 +1280,17 @@ export default function App() {
                   </div>
                   {tasks.length > 0 && (
                     <button className="add-task-link" onClick={openNewTask}>
-                      <Plus size={16} /> {t("addAnother")}
+                      <Plus size={15} /> {t("addAnother")}
                     </button>
                   )}
                 </article>
 
-                {/* Right Column: Live Focus Card */}
+                {/* Right Column: Active Task Card */}
                 <div className="right-column">
                   <article className="panel next-panel">
                     <div className="section-kicker">
                       {cascadeInfo.overdueTask
-                        ? "CRITICAL STRESS ALERT"
+                        ? "ALERT: TIME OVER"
                         : currentTask
                         ? t("inProgress")
                         : t("upNext")}
@@ -1403,34 +1298,34 @@ export default function App() {
 
                     {cascadeInfo.overdueTask ? (
                       <>
-                        <h2 className="next-title" style={{ color: "#ff007f" }}>
+                        <h2 className="next-title" style={{ color: "var(--neon-rose)" }}>
                           {cascadeInfo.overdueTask.title}
                         </h2>
                         <div className="next-time">
-                          <Clock3 size={15} />
+                          <Clock3 size={14} />
                           {timeLabel(cascadeInfo.overdueTask.time, language)}
                           <span>·</span>
                           {cascadeInfo.overdueTask.duration} min planned
                         </div>
                         <div className="live-countdown countdown-overdue">
-                          <div className="countdown-label">OVERRUN DURATION</div>
+                          <div className="countdown-label">TIME OVER PLAN</div>
                           <strong>+{countdown(now - taskEnd(cascadeInfo.overdueTask))}</strong>
-                          <span>Pushing upcoming commitments downstream</span>
+                          <span>Next task pushed forward</span>
                         </div>
-                        <div style={{ marginTop: "14px", display: "flex", gap: "8px" }}>
+                        <div style={{ marginTop: "12px", display: "flex", gap: "8px" }}>
                           <button
                             className="action-btn btn-domino"
                             style={{ flex: 1 }}
-                            onClick={() => handleDominoShift()}
+                            onClick={handleDominoShift}
                           >
-                            <FastForward size={15} /> Shift Day
+                            <FastForward size={14} /> Auto-Shift
                           </button>
                           <button
                             className="action-btn btn-advance"
                             style={{ flex: 1 }}
                             onClick={handleMarkDoneAndAdvance}
                           >
-                            <Check size={15} /> Mark Done
+                            <Check size={14} /> Done
                           </button>
                         </div>
                       </>
@@ -1438,7 +1333,7 @@ export default function App() {
                       <>
                         <h2 className="next-title">{currentTask.title}</h2>
                         <div className="next-time">
-                          <Clock3 size={15} />
+                          <Clock3 size={14} />
                           {timeLabel(currentTask.time, language)}
                           <span>·</span>
                           {currentTask.duration} min
@@ -1453,46 +1348,27 @@ export default function App() {
                       <>
                         <h2 className="next-title">{nextTask.title}</h2>
                         <div className="next-time">
-                          <Clock3 size={15} />
+                          <Clock3 size={14} />
                           {t("startTime")}: {timeLabel(nextTask.time, language)}
                           <span>·</span>
                           {nextTask.duration} min
                         </div>
                         <div className="next-divider" />
                         <div className="next-tip">
-                          <Clock3 size={17} />
+                          <Clock3 size={15} />
                           <span>{t("nextComing")}</span>
                         </div>
                       </>
                     ) : (
                       <div className="all-done">
-                        <CircleCheck size={28} />
+                        <CircleCheck size={26} />
                         <h3>{tasks.length ? t("caughtUp") : t("nothingScheduled")}</h3>
                         <p>{tasks.length ? t("noRemaining") : t("addToSee")}</p>
                         <button className="secondary-button" onClick={openNewTask}>
-                          <Plus size={15} /> {t("createTask")}
+                          <Plus size={14} /> {t("createTask")}
                         </button>
                       </div>
                     )}
-                  </article>
-
-                  {/* Acoustic Persona Quick Card */}
-                  <article className="panel">
-                    <div className="section-kicker">ACOUSTIC PROFILE</div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "10px 0 8px" }}>
-                      <strong style={{ fontSize: "14px", color: "#fff" }}>{profile.customName || "My Ordo"}</strong>
-                      <span className="profile-fingerprint-pill">{profile.uniqueId || "ORDO-7492"}</span>
-                    </div>
-                    <p style={{ fontSize: "11px", color: "var(--text-subtle)", margin: "0 0 14px", lineHeight: "1.5" }}>
-                      Custom {profile.soundFreq} Hz ({profile.soundWave}) tone with {profile.delayToleranceMin}m cushion before stress escalates.
-                    </p>
-                    <button
-                      className="secondary-button"
-                      style={{ width: "100%" }}
-                      onClick={() => setShowProfileModal(true)}
-                    >
-                      <Sliders size={15} /> Customize Acoustic Alarm
-                    </button>
                   </article>
                 </div>
               </section>
@@ -1500,7 +1376,7 @@ export default function App() {
           )}
 
           <footer className="page-footer">
-            <span>ORDO / CASCADE STRESS ALERTS</span>
+            <span>ORDO</span>
             <span>{t("footer")}</span>
           </footer>
         </div>
@@ -1509,12 +1385,12 @@ export default function App() {
       {/* Floating Toast Notification */}
       {toast && (
         <div className="ordo-toast" role="status">
-          <CircleCheck size={16} />
+          <CircleCheck size={15} />
           {toast}
         </div>
       )}
 
-      {/* Unique Ordo Profile / Acoustic Alarm Modal */}
+      {/* Acoustic Alarm & Persona Modal */}
       {showProfileModal && (
         <OrdoProfileModal
           profile={profile}
@@ -1523,7 +1399,7 @@ export default function App() {
         />
       )}
 
-      {/* Add / Edit Task Modal */}
+      {/* Task Modal */}
       {showForm && (
         <div
           className="modal-backdrop"
@@ -1552,7 +1428,7 @@ export default function App() {
                   resetForm();
                 }}
               >
-                <X size={19} />
+                <X size={18} />
               </button>
             </div>
             <label className="form-label">
@@ -1610,7 +1486,7 @@ export default function App() {
                   value={category}
                   onChange={(event) => setCategory(event.target.value)}
                 >
-                  {["Study", "Work", "Personal", "Health", "Project", "Other"].map(
+                  {["Work", "Study", "Personal", "Health", "Project", "Other"].map(
                     (item) => (
                       <option key={item} value={item}>
                         {t(item)}
@@ -1632,7 +1508,7 @@ export default function App() {
                 {t("cancel")}
               </button>
               <button type="submit" className="primary-button">
-                {editingId ? <Check size={17} /> : <Plus size={17} />}
+                {editingId ? <Check size={16} /> : <Plus size={16} />}
                 {editingId ? t("saveChanges") : t("create")}
               </button>
             </div>

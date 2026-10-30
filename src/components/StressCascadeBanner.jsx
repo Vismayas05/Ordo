@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   AlertTriangle,
   ArrowRight,
@@ -8,28 +7,21 @@ import {
   Volume2,
   VolumeX,
   CheckCircle2,
-  Sparkles,
-  Layers,
 } from "lucide-react";
 
 export default function StressCascadeBanner({
   cascadeInfo,
   onDominoShift,
-  onCompressBuffers,
   onMarkDoneAndAdvance,
   onSnooze,
   isMuted = false,
   onToggleMute,
-  language = "en",
 }) {
-  const [showDominoDetails, setShowDominoDetails] = useState(false);
-
   if (!cascadeInfo || !cascadeInfo.overdueTask) {
     return null;
   }
 
   const { overdueTask, overrunMinutes, stressScore, stressState, impactedUpcoming } = cascadeInfo;
-
   const isCritical = stressState === "critical" || stressScore >= 75;
 
   return (
@@ -38,7 +30,6 @@ export default function StressCascadeBanner({
       role="alert"
     >
       <div className="stress-hud-main">
-        {/* Left Indicator & Icon */}
         <div className="stress-beacon-container">
           <div className="stress-beacon-ring" />
           <div className="stress-beacon-dot">
@@ -46,43 +37,39 @@ export default function StressCascadeBanner({
           </div>
         </div>
 
-        {/* Core Content */}
         <div className="stress-copy">
           <div className="stress-top-meta">
             <span className="stress-badge">
-              {isCritical ? "CRITICAL DOMINO CASCADE" : "SCHEDULE STRESS ALARM"}
+              {isCritical ? "CRITICAL ALERT" : "SCHEDULE ALERT"}
             </span>
             <span className="stress-index-pill">
-              PRESSURE: <strong>{stressScore}%</strong>
+              STRESS: <strong>{stressScore}%</strong>
             </span>
             <span className="overrun-tag">
-              <Clock size={13} /> +{overrunMinutes}m over planned duration
+              <Clock size={13} /> +{overrunMinutes}m late
             </span>
           </div>
 
           <h3 className="stress-title">
-            Focusing too long on “{overdueTask.title}” is pushing upcoming tasks!
+            “{overdueTask.title}” is taking longer than planned
           </h3>
 
           <p className="stress-impact-text">
             {impactedUpcoming.length > 0 ? (
               <>
-                Domino ripple: delaying <strong>{impactedUpcoming.length} upcoming tasks</strong> and
-                squeezing <strong>{overrunMinutes} minutes</strong> from your remaining day.
+                Delays <strong>{impactedUpcoming.length} upcoming task{impactedUpcoming.length > 1 ? "s" : ""}</strong> by {overrunMinutes} minutes.
               </>
             ) : (
-              <>
-                You have exceeded the planned time for this task. Moving forward maintains your daily momentum.
-              </>
+              "Task is past planned duration."
             )}
           </p>
 
-          {/* Collapsible / Expandable Domino Impact Chain */}
+          {/* Simple Timeline Shift Preview */}
           {impactedUpcoming.length > 0 && (
             <div className="domino-chain-preview">
               <div className="domino-chain-track">
                 <div className="domino-node node-current">
-                  <span className="node-label">Overdue</span>
+                  <span className="node-label">Late Task</span>
                   <strong>{overdueTask.title}</strong>
                   <span className="node-time">+{overrunMinutes}m</span>
                 </div>
@@ -100,50 +87,29 @@ export default function StressCascadeBanner({
                     </span>
                   </div>
                 ))}
-
-                {impactedUpcoming.length > 2 && (
-                  <button
-                    className="domino-more-pill"
-                    onClick={() => setShowDominoDetails(!showDominoDetails)}
-                  >
-                    +{impactedUpcoming.length - 2} more
-                  </button>
-                )}
               </div>
             </div>
           )}
         </div>
 
-        {/* Quick Action Resolution Buttons */}
         <div className="stress-actions">
           <button
             className="action-btn btn-domino"
             onClick={onDominoShift}
-            title="Automatically reschedule all downstream tasks forward to eliminate overlap"
+            title="Automatically adjust upcoming tasks"
           >
             <FastForward size={16} />
-            <span>Domino Shift Schedule</span>
+            <span>Auto-Shift Schedule</span>
           </button>
 
           <button
             className="action-btn btn-advance"
             onClick={onMarkDoneAndAdvance}
-            title="Mark current task done right now and begin next task"
+            title="Mark current task complete"
           >
             <CheckCircle2 size={16} />
-            <span>Finish & Advance</span>
+            <span>Mark Done</span>
           </button>
-
-          {impactedUpcoming.length > 0 && (
-            <button
-              className="action-btn btn-compress"
-              onClick={onCompressBuffers}
-              title="Trim a few minutes from downstream tasks to protect end-of-day"
-            >
-              <Layers size={16} />
-              <span>Compress Buffers</span>
-            </button>
-          )}
 
           <div className="stress-utility-row">
             <button className="utility-btn" onClick={onSnooze}>
@@ -152,10 +118,9 @@ export default function StressCascadeBanner({
             <button
               className={`utility-btn ${isMuted ? "muted-btn" : ""}`}
               onClick={onToggleMute}
-              title={isMuted ? "Unmute alarm audio" : "Mute alarm audio"}
             >
               {isMuted ? <VolumeX size={15} /> : <Volume2 size={15} />}
-              <span>{isMuted ? "Sound Off" : "Sound On"}</span>
+              <span>{isMuted ? "Muted" : "Sound"}</span>
             </button>
           </div>
         </div>
