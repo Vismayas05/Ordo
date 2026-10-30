@@ -1,4 +1,9 @@
 # ORDO
+<p align="center">
+  <a href="https://ordo-sooty.vercel.app/">
+    <strong>🌐 Live Demo — Try ORDO</strong>
+  </a>
+</p>
 
 > An intelligent, focus-first alert scheduler that protects your daily schedule through dynamic time-shift alarms and personalized acoustic synthesis.
 
