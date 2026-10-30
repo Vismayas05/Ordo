@@ -293,71 +293,36 @@ const TEXT = {
   },
 };
 
+function getDefaultTime() {
+  const d = new Date();
+  const h = String(d.getHours()).padStart(2, "0");
+  const m = String(Math.floor(d.getMinutes() / 5) * 5).padStart(2, "0");
+  return `${h}:${m}`;
+}
+
 function readTasks() {
   try {
-    const tasks = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    if (!Array.isArray(tasks) || tasks.length === 0) {
-      // Provide an intelligent initial baseline matching the current time
-      const nowH = new Date().getHours();
-      const pad = (n) => String(n).padStart(2, "0");
-      const t1 = `${pad(Math.max(0, nowH - 1))}:00`;
-      const t2 = `${pad(nowH)}:00`;
-      const t3 = `${pad((nowH + 1) % 24)}:15`;
-      const t4 = `${pad((nowH + 2) % 24)}:30`;
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const tasks = JSON.parse(raw);
+    if (!Array.isArray(tasks)) return [];
 
-      return [
-        {
-          id: "task-1",
-          title: "Deep Architecture & Refactor",
-          time: t1,
-          duration: 45,
-          priority: "High",
-          category: "Work",
-          done: false,
-          createdAt: Date.now() - 3600000,
-        },
-        {
-          id: "task-2",
-          title: "Stress Alarm Acoustic Synthesis",
-          time: t2,
-          duration: 45,
-          priority: "High",
-          category: "Project",
-          done: false,
-          createdAt: Date.now() - 1800000,
-        },
-        {
-          id: "task-3",
-          title: "Schedule Domino Impact Review",
-          time: t3,
-          duration: 30,
-          priority: "Medium",
-          category: "Work",
-          done: false,
-          createdAt: Date.now(),
-        },
-        {
-          id: "task-4",
-          title: "Mindful Decompression & Evening Buffer",
-          time: t4,
-          duration: 45,
-          priority: "Low",
-          category: "Personal",
-          done: false,
-          createdAt: Date.now(),
-        },
-      ];
-    }
-    return tasks
-      .filter((task) => task?.id && task?.title)
-      .map((task) => ({
-        ...task,
-        duration: Number(task.duration) || 30,
-        priority: ["Low", "Medium", "High"].includes(task.priority) ? task.priority : "Medium",
-        category: task.category || "Personal",
-        time: task.time || "17:00",
-        done: Boolean(task.done),
-      }));
+    // Filter out old prototype mock tasks so users start clean
+    const cleanTasks = tasks.filter(
+      (task) =>
+        task?.id &&
+        task?.title &&
+        !["task-1", "task-2", "task-3", "task-4"].includes(task.id)
+    );
+
+    return cleanTasks.map((task) => ({
+      ...task,
+      duration: Number(task.duration) || 30,
+      priority: ["Low", "Medium", "High"].includes(task.priority) ? task.priority : "Medium",
+      category: task.category || "Work",
+      time: task.time || getDefaultTime(),
+      done: Boolean(task.done),
+    }));
   } catch {
     return [];
   }
@@ -436,7 +401,7 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [title, setTitle] = useState("");
-  const [time, setTime] = useState("17:00");
+  const [time, setTime] = useState(getDefaultTime);
   const [duration, setDuration] = useState("30");
   const [priority, setPriority] = useState("Medium");
   const [category, setCategory] = useState("Work");
@@ -642,7 +607,7 @@ export default function App() {
   function resetForm() {
     setEditingId(null);
     setTitle("");
-    setTime("17:00");
+    setTime(getDefaultTime());
     setDuration("30");
     setPriority("Medium");
     setCategory("Work");
@@ -656,11 +621,60 @@ export default function App() {
   function openEditTask(task) {
     setEditingId(task.id);
     setTitle(task.title);
-    setTime(task.time || "17:00");
+    setTime(task.time || getDefaultTime());
     setDuration(String(task.duration || 30));
     setPriority(task.priority || "Medium");
     setCategory(task.category || "Work");
     setShowForm(true);
+  }
+
+  function clearAllTasks() {
+    setTasks([]);
+    stopStressAlarm();
+    setToast(language === "ml" ? "എല്ലാ ടാസ്കുകളും നീക്കം ചെയ്തു." : "All tasks cleared. Ready for your fresh schedule.");
+  }
+
+  function loadSampleTemplate() {
+    const nowH = new Date().getHours();
+    const pad = (n) => String(n).padStart(2, "0");
+    const t1 = `${pad(Math.max(0, nowH - 1))}:00`;
+    const t2 = `${pad(nowH)}:00`;
+    const t3 = `${pad((nowH + 1) % 24)}:15`;
+
+    const sample = [
+      {
+        id: `sample-1-${Date.now()}`,
+        title: "Focus Block: Deep Work",
+        time: t1,
+        duration: 45,
+        priority: "High",
+        category: "Work",
+        done: false,
+        createdAt: Date.now() - 3600000,
+      },
+      {
+        id: `sample-2-${Date.now()}`,
+        title: "Project Review & Feedback",
+        time: t2,
+        duration: 30,
+        priority: "Medium",
+        category: "Project",
+        done: false,
+        createdAt: Date.now() - 1800000,
+      },
+      {
+        id: `sample-3-${Date.now()}`,
+        title: "Day Wrap-up & Planning",
+        time: t3,
+        duration: 30,
+        priority: "Low",
+        category: "Personal",
+        done: false,
+        createdAt: Date.now(),
+      },
+    ];
+    setTasks(sample);
+    setToast(language === "ml" ? "സാമ്പിൾ ടാസ്കുകൾ ചേർത്തു." : "Sample routine loaded for testing.");
   }
 
   function saveTask(event) {
@@ -1012,6 +1026,7 @@ export default function App() {
               cascadeInfo={cascadeInfo}
               onDominoShift={handleDominoShift}
               onCompressBuffers={handleCompressBuffers}
+              onOpenNewTask={openNewTask}
               language={language}
             />
           ) : activeNav === "Settings" ? (
@@ -1087,6 +1102,20 @@ export default function App() {
                   onClick={enableNotifications}
                 >
                   <span />
+                </button>
+              </div>
+
+              <div className="settings-option">
+                <div>
+                  <strong>Clear All Tasks</strong>
+                  <span>Reset your schedule and remove all current tasks to start fresh.</span>
+                </div>
+                <button
+                  className="secondary-button"
+                  style={{ color: "var(--neon-rose)", borderColor: "var(--border-neon-rose)" }}
+                  onClick={clearAllTasks}
+                >
+                  <Trash2 size={15} /> Clear Tasks
                 </button>
               </div>
 
@@ -1207,6 +1236,42 @@ export default function App() {
                   </div>
                 </article>
               </section>
+
+              {tasks.length === 0 && (
+                <div
+                  className="panel"
+                  style={{
+                    marginBottom: "20px",
+                    background: "linear-gradient(135deg, rgba(0, 194, 255, 0.12) 0%, rgba(255, 0, 127, 0.08) 100%)",
+                    border: "1px solid var(--border-cerulean)",
+                    padding: "24px 28px",
+                  }}
+                >
+                  <div className="section-kicker">GET STARTED WITH ORDO</div>
+                  <h2 style={{ fontSize: "22px", margin: "8px 0 6px", color: "#fff" }}>
+                    Your Schedule Is Ready To Plan
+                  </h2>
+                  <p
+                    style={{
+                      color: "var(--text-muted)",
+                      fontSize: "13px",
+                      lineHeight: "1.6",
+                      maxWidth: "620px",
+                      margin: "0 0 18px",
+                    }}
+                  >
+                    Add your focus blocks for today. If you get caught up or run late on a task, Ordo’s acoustic stress alarm triggers and calculates how your delay cascades into your upcoming tasks.
+                  </p>
+                  <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                    <button className="primary-button" onClick={openNewTask}>
+                      <Plus size={16} /> Create Your First Task
+                    </button>
+                    <button className="secondary-button" onClick={loadSampleTemplate}>
+                      <Sparkles size={16} /> Load Demo Routine (Optional)
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <section className="content-grid">
                 {/* Main Schedule / Task Table Panel */}

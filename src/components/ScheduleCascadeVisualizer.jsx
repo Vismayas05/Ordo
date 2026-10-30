@@ -8,6 +8,7 @@ import {
   Layers,
   Sparkles,
   Zap,
+  Plus,
 } from "lucide-react";
 import { parseTaskTime, formatTimeFromMs } from "../services/stressEngine.js";
 
@@ -17,6 +18,7 @@ export default function ScheduleCascadeVisualizer({
   cascadeInfo = {},
   onDominoShift,
   onCompressBuffers,
+  onOpenNewTask,
   language = "en",
 }) {
   const [simulationExtraMin, setSimulationExtraMin] = useState(15);
@@ -99,9 +101,14 @@ export default function ScheduleCascadeVisualizer({
       <div className="cascade-timeline-chain">
         {simulationSimulated.length === 0 ? (
           <div className="empty-state">
-            <Clock size={28} />
+            <Clock size={32} />
             <strong>No active tasks scheduled</strong>
-            <span>Create tasks to see the live cascade impact.</span>
+            <span>Create your schedule to see the live cascade impact and test delays with the simulator.</span>
+            {onOpenNewTask && (
+              <button className="primary-button" style={{ marginTop: "10px" }} onClick={onOpenNewTask}>
+                <Plus size={16} /> Create Your First Task
+              </button>
+            )}
           </div>
         ) : (
           simulationSimulated.map((task, idx) => {
